@@ -1,28 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="Georgia, 'Songti SC', serif">
-  <rect width="1200" height="800" fill="#faf9f5"/>
-  <rect width="1200" height="72" fill="#f1ebe1"/>
-  <circle cx="70" cy="36" r="14" fill="#bc6a3a"/>
-  <text x="96" y="45" font-size="26" fill="#1c1815">Mira</text>
-  <text x="760" y="44" font-size="20" fill="#5b5148">Product    Pricing    Customers</text>
-  <rect x="1060" y="18" width="110" height="38" rx="19" fill="#bc6a3a"/>
-  <text x="1082" y="44" font-size="19" fill="#fffaf2">Start free</text>
-  <text x="96" y="262" font-size="66" fill="#1c1815">Give your team back</text>
-  <text x="96" y="330" font-size="66" fill="#bc6a3a">10 hours a week.</text>
-  <text x="96" y="398" font-size="30" fill="#5b5148">92% task success on our public benchmark · see the methodology →</text>
-  <g font-size="19" fill="#2b2621">
-    <rect x="96" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
-    <text x="120" y="568">“Mira drafts the follow-ups</text>
-    <text x="120" y="596">so I can focus on the client.”</text>
-    <text x="120" y="650" fill="#8a7f73">— verified customer</text>
-    <rect x="440" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
-    <text x="464" y="568">“Our team handles twice</text>
-    <text x="464" y="596">the requests, with less stress.”</text>
-    <text x="464" y="650" fill="#8a7f73">— verified customer</text>
-    <rect x="784" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
-    <text x="808" y="568">“A second pair of hands,</text>
-    <text x="808" y="596">not a replacement.”</text>
-    <text x="808" y="650" fill="#8a7f73">— verified customer</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#140e3a"/>
+      <stop offset="0.55" stop-color="#2a1868"/>
+      <stop offset="1" stop-color="#120a28"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0.5" cy="0.45" r="0.55">
+      <stop offset="0" stop-color="#9aa8ff"/>
+      <stop offset="1" stop-color="#6a4cff"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="86" cy="78" r="16" fill="url(#orb)"/>
+  <text x="114" y="86" fill="#f4f2ff" font-family="Inter, PingFang SC, sans-serif" font-size="28" font-weight="600">Mira Agent</text>
+  <text x="760" y="84" fill="#c9c4e4" font-family="Inter, PingFang SC, sans-serif" font-size="18">Product    Pricing    Customers</text>
+  <rect x="1048" y="56" width="112" height="40" rx="20" fill="#7b6cff"/>
+  <text x="1070" y="82" fill="#f7f5ff" font-family="Inter, PingFang SC, sans-serif" font-size="16">Start free</text>
+  <text x="96" y="268" fill="#f7f5ff" font-family="Inter, PingFang SC, sans-serif" font-size="46" font-weight="650">Give your team back</text>
+  <text x="96" y="324" fill="#c4b8ff" font-family="Inter, PingFang SC, sans-serif" font-size="46" font-weight="650">10 hours a week.</text>
+  <text x="96" y="404" fill="#ddd8f5" font-family="Inter, PingFang SC, sans-serif" font-size="26">92% task success on our public benchmark.</text>
+  <g font-family="Inter, PingFang SC, sans-serif" font-size="20" fill="#f4f2ff">
+    <rect x="96" y="500" width="320" height="168" rx="16" fill="#241a52" stroke="#6d62b8"/>
+    <text x="116" y="556">“Mira drafts the follow-ups</text>
+    <text x="116" y="586">so I can focus on the client.”</text>
+    <text x="116" y="634" fill="#b7b1d8">— verified customer</text>
+    <rect x="440" y="500" width="320" height="168" rx="16" fill="#241a52" stroke="#6d62b8"/>
+    <text x="460" y="548">“Our team handles twice</text>
+    <text x="460" y="578">the requests, with less stress.”</text>
+    <text x="460" y="634" fill="#b7b1d8">— verified customer</text>
+    <rect x="784" y="500" width="320" height="168" rx="16" fill="#241a52" stroke="#6d62b8"/>
+    <text x="804" y="556">“A second pair of hands,</text>
+    <text x="804" y="586">not a replacement.”</text>
+    <text x="804" y="634" fill="#b7b1d8">— verified customer</text>
   </g>
-  <rect x="930" y="96" width="240" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
-  <text x="950" y="123" font-size="20" fill="#8a7f73">示意图 · 落地页改稿</text>
+  <rect x="96" y="708" width="360" height="40" rx="20" fill="#efeaff"/>
+  <text x="116" y="734" fill="#241a52" font-family="Inter, PingFang SC, sans-serif" font-size="18">演示素材 · 本地化修订示例</text>
 </svg>
