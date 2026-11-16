@@ -1,0 +1,10 @@
+sourceSha 0c8e753b70a774e7627c0c25b6777dfccb55a10d
+tree 85667bd864e49e5a5ccf040db579f3a5d50abf80
+sameTreeAs 454e713c7ff110fa01c9de8254b009a469bfe459
+command npm run build:mock
+mode mock
+deployed no
+worker clearrun-global
+hostname global-clearrun.zichengyu.com
+d1 clearrun-global-demo 1537b307-566a-40fc-8bf9-04ae80dac074
+secret none

@@ -1,6 +1,18 @@
 # Mock 演示构建产物
 
-这是 `cf build --mode mock` 的 Build Output，已在本机用 `cf deploy --mode mock --dry-run --provision false` 检查过。**没有上传，没有绑定域名，没有写入 D1。**
+这是 `cf build --mode mock` 的 Build Output。**没有上传，没有绑定域名，没有写入 D1，也没有执行 deploy。**
+
+## 这一份对应的源码
+
+| 项 | 值 |
+|---|---|
+| main 合并提交 | `0c8e753b70a774e7627c0c25b6777dfccb55a10d` |
+| 与该合并提交相同的树 | `454e713c7ff110fa01c9de8254b009a469bfe459` |
+| 构建 | `npm run build:mock` |
+| 文件清单 | `manifest.sha256`（`output/` 内 17 个文件的 SHA-256） |
+| 界面截图 | `ui/`，离线演示，不会上传 |
+
+这不是更早的 PR1 归档。协调侧若要发布，用这一份，并先核对下面的 Worker、D1 和域名。
 
 目录里没有 API token，也没有 `OPENROUTER_API_KEY`。Worker 源码仍会在 live 模式下读取这个绑定名；mock 配置没有声明该 secret。
 
