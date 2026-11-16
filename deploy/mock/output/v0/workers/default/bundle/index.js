@@ -3225,7 +3225,7 @@ function weekPressure(events, monday, segment) {
 		parts
 	};
 }
-function scoreWeek(events, week, request, coverageEnd) {
+function scoreWeek(events, week, request, coverageStart, coverageEnd) {
 	const byEvent = /* @__PURE__ */ new Map();
 	let pressure = 0;
 	LAUNCH_RUN.forEach((weight, j) => {
@@ -3271,7 +3271,7 @@ function scoreWeek(events, week, request, coverageEnd) {
 		contributors,
 		opportunities,
 		estimated: top.some((e) => e?.confidence === "estimated"),
-		covered: addDays(week, 7 * LAUNCH_RUN.length - 1) <= coverageEnd
+		covered: coverageStart !== "" && week >= coverageStart && addDays(week, 7 * LAUNCH_RUN.length - 1) <= coverageEnd
 	};
 }
 /** Top weeks by score, at least `gap` weeks apart. Ties keep calendar order. */
@@ -3302,8 +3302,9 @@ function verdict(weeks, yourWeek) {
 }
 function planMarket(market, request, events = knowledge.calendar) {
 	const mine = events.filter((e) => e.market === market);
+	const coverageStart = events.reduce((min, e) => min === "" || e.start < min ? e.start : min, "");
 	const coverageEnd = events.reduce((max, e) => e.end > max ? e.end : max, "");
-	const weeks = listMondays(request.from, request.weeks).map((week) => scoreWeek(mine, week, request, coverageEnd));
+	const weeks = listMondays(request.from, request.weeks).map((week) => scoreWeek(mine, week, request, coverageStart, coverageEnd));
 	const yours = request.yours?.[market];
 	const first = weeks[0]?.week ?? request.from;
 	return {
@@ -3401,18 +3402,21 @@ var DEMO_CASES = [
 					signal: "privacy.no_local_policy",
 					asset: "page",
 					evidence: "隐私政策只有英文版",
+					quotes: ["隐私政策只有英文版"],
 					confidence: .95
 				},
 				{
 					signal: "privacy.no_data_residency",
 					asset: "page",
 					evidence: "没有写明数据存储地区与跨境传输",
+					quotes: ["没有写明用户数据存储在哪个地区、是否跨境传输"],
 					confidence: .95
 				},
 				{
 					signal: "ai.no_disclosure",
 					asset: "page",
 					evidence: "AI 生成内容没有标识说明",
+					quotes: ["AI 生成的内容没有任何标识说明"],
 					confidence: .9
 				}
 			]
@@ -3500,12 +3504,14 @@ var DEMO_CASES = [
 					signal: "claim.emotional_ghostwriting",
 					asset: "copy",
 					evidence: "Mira wrote my wedding vows",
+					quotes: ["Mira wrote my wedding vows in 30 seconds."],
 					confidence: .85
 				},
 				{
 					signal: "claim.ai_testimonial",
 					asset: "page",
 					evidence: "推荐语由 AI 生成，不是真实用户",
+					quotes: ["用户推荐语由 AI 生成", "不是真实用户"],
 					confidence: .95
 				}
 			]
@@ -3746,6 +3752,7 @@ function cleanSignals(raw, assets) {
 		if (!asset) continue;
 		const confidence = typeof item.confidence === "number" ? clamp01(item.confidence) : .7;
 		const evidence = typeof item.evidence === "string" ? item.evidence.trim().slice(0, 200) : "";
+		const quotes = Array.isArray(item.quotes) ? item.quotes.filter((quote) => typeof quote === "string").map((quote) => quote.trim().slice(0, 240)).filter((quote) => quote.length >= 2).slice(0, 8) : [];
 		let box;
 		if (Array.isArray(item.box) && item.box.length === 4 && item.box.every((n) => typeof n === "number" && Number.isFinite(n))) {
 			const [x, y, w, h] = item.box.map(clamp01);
@@ -3761,6 +3768,7 @@ function cleanSignals(raw, assets) {
 			asset,
 			evidence,
 			confidence,
+			...quotes.length ? { quotes } : {},
 			...box ? { box } : {}
 		});
 	}
@@ -3789,8 +3797,9 @@ var PERCEIVE_SYSTEM = [
 	"Do not judge whether anything is offensive, risky or legal: a separate rulebook decides that. Never invent signals that are not listed.",
 	"Page signals come only from the page notes. Theme signals describe the creative's overall theme or tone.",
 	"For images, give box as [x, y, width, height] in fractions of the image (0–1), tight around what you saw. Omit box for text.",
-	"evidence: a short quote or description, in Chinese, of exactly what you saw. confidence: 0–1.",
-	"Reply with JSON only, no prose: {\"signals\":[{\"signal\":\"…\",\"asset\":\"…\",\"evidence\":\"…\",\"box\":[0,0,0,0],\"confidence\":0.9}]}. Reply {\"signals\":[]} when nothing applies.",
+	"evidence: a short description, in Chinese, of what you saw. It does not have to be a verbatim substring.",
+	"quotes: for text, exact substrings copied from that asset, which the UI highlights. Omit quotes when you cannot copy one. confidence: 0–1.",
+	"Reply with JSON only, no prose: {\"signals\":[{\"signal\":\"…\",\"asset\":\"…\",\"evidence\":\"…\",\"quotes\":[\"exact words\"],\"box\":[0,0,0,0],\"confidence\":0.9}]}. Reply {\"signals\":[]} when nothing applies.",
 	"",
 	"Signals:",
 	...SIGNAL_IDS.map((id) => `- ${id} [${SIGNALS[id].channel}]: ${SIGNALS[id].hint}`)

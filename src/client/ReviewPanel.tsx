@@ -5,7 +5,7 @@ import type { DemoAsset } from "../shared/demo.ts";
 import { MARKET_LABEL, STAGE_LABEL, type Market } from "../shared/knowledge.ts";
 import { signalLabel } from "../shared/signals.ts";
 import { Icon, type IconName } from "./Icon.tsx";
-import { Dialog, Highlight, SeverityLabel, VerifiedLabel } from "./ui.tsx";
+import { Dialog, Highlight, SeverityLabel, VerifiedLabel, signalNeedles } from "./ui.tsx";
 
 const ASSET_ICON: Record<DemoAsset["kind"], IconName> = { image: "image", copy: "text", page: "page" };
 
@@ -79,6 +79,7 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 	const mine = signals.filter((s) => s.asset === asset.id);
 	if (asset.kind !== "image") {
 		const selected = active?.signals.filter((s) => s.asset === asset.id) ?? [];
+		const shown = selected.length ? selected : mine;
 		return (
 			<div className="document-preview">
 				<div className="document-label">
@@ -86,7 +87,7 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 					{asset.label}
 				</div>
 				<p>
-					<Highlight text={asset.content} needles={(selected.length ? selected : mine).map((s) => s.evidence)} />
+					<Highlight text={asset.content} needles={shown.flatMap(signalNeedles)} severity={selected.length ? active?.rule.severity : undefined} />
 				</p>
 			</div>
 		);
@@ -99,10 +100,11 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 					if (!s.box) return null;
 					const [x, y, w, h] = s.box;
 					const finding = active?.signals.includes(s) ? active : findings.find((f) => f.signals.includes(s));
+					const chosen = Boolean(active?.signals.includes(s));
 					return (
 						<div
 							key={i}
-							className={"annotation " + (finding?.rule.severity ?? "unmatched")}
+							className={"annotation " + (finding?.rule.severity ?? "unmatched") + (active ? (chosen ? " selected" : " idle") : "")}
 							style={{ left: x * 100 + "%", top: y * 100 + "%", width: w * 100 + "%", height: h * 100 + "%" }}
 						>
 							{finding ? (

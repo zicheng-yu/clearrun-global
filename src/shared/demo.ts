@@ -57,9 +57,15 @@ export const DEMO_CASES: DemoCase[] = [
 			],
 			signals: [
 				{ signal: "gesture.pinch", asset: "kv", evidence: "拇指和食指捏住手机的上下两端", box: [0.52, 0.076, 0.466, 0.82], confidence: 0.92 },
-				{ signal: "privacy.no_local_policy", asset: "page", evidence: "隐私政策只有英文版", confidence: 0.95 },
-				{ signal: "privacy.no_data_residency", asset: "page", evidence: "没有写明数据存储地区与跨境传输", confidence: 0.95 },
-				{ signal: "ai.no_disclosure", asset: "page", evidence: "AI 生成内容没有标识说明", confidence: 0.9 },
+				{ signal: "privacy.no_local_policy", asset: "page", evidence: "隐私政策只有英文版", quotes: ["隐私政策只有英文版"], confidence: 0.95 },
+				{
+					signal: "privacy.no_data_residency",
+					asset: "page",
+					evidence: "没有写明数据存储地区与跨境传输",
+					quotes: ["没有写明用户数据存储在哪个地区、是否跨境传输"],
+					confidence: 0.95,
+				},
+				{ signal: "ai.no_disclosure", asset: "page", evidence: "AI 生成内容没有标识说明", quotes: ["AI 生成的内容没有任何标识说明"], confidence: 0.9 },
 			],
 		},
 		localized: {
@@ -99,8 +105,20 @@ export const DEMO_CASES: DemoCase[] = [
 			signals: [
 				{ signal: "claim.replace_humans", asset: "hero", evidence: "Fire your assistant. Hire Mira.", box: [0.08, 0.26, 0.84, 0.16], confidence: 0.95 },
 				{ signal: "claim.absolute_accuracy", asset: "hero", evidence: "100% accurate. Never hallucinates.", box: [0.08, 0.44, 0.6, 0.08], confidence: 0.95 },
-				{ signal: "claim.emotional_ghostwriting", asset: "copy", evidence: "Mira wrote my wedding vows", confidence: 0.85 },
-				{ signal: "claim.ai_testimonial", asset: "page", evidence: "推荐语由 AI 生成，不是真实用户", confidence: 0.95 },
+				{
+					signal: "claim.emotional_ghostwriting",
+					asset: "copy",
+					evidence: "Mira wrote my wedding vows",
+					quotes: ["Mira wrote my wedding vows in 30 seconds."],
+					confidence: 0.85,
+				},
+				{
+					signal: "claim.ai_testimonial",
+					asset: "page",
+					evidence: "推荐语由 AI 生成，不是真实用户",
+					quotes: ["用户推荐语由 AI 生成", "不是真实用户"],
+					confidence: 0.95,
+				},
 			],
 		},
 		localized: {

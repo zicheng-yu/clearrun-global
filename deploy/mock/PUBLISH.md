@@ -27,6 +27,8 @@
 
 `worker.config.json` 里的 `domains` 只是声明。真正创建 DNS 发生在不带 `--dry-run` 的 deploy。
 
+`ui/` 是 mock 界面截图，标明离线演示，只给核对和海报取材。这些图片不会上传到 Cloudflare。
+
 ## 以后若要发布
 
 在已经登录的本机上执行，不要把 OAuth token 贴进命令行：

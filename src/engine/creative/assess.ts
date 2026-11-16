@@ -52,12 +52,19 @@ export function cleanSignals(raw: unknown, assets: string[]): DetectedSignal[] {
 		if (!asset) continue;
 		const confidence = typeof item.confidence === "number" ? clamp01(item.confidence) : 0.7;
 		const evidence = typeof item.evidence === "string" ? item.evidence.trim().slice(0, 200) : "";
+		const quotes = Array.isArray(item.quotes)
+			? item.quotes
+					.filter((quote): quote is string => typeof quote === "string")
+					.map((quote) => quote.trim().slice(0, 240))
+					.filter((quote) => quote.length >= 2)
+					.slice(0, 8)
+			: [];
 		let box: Box | undefined;
 		if (Array.isArray(item.box) && item.box.length === 4 && item.box.every((n) => typeof n === "number" && Number.isFinite(n))) {
 			const [x, y, w, h] = (item.box as number[]).map(clamp01) as Box;
 			if (w > 0 && h > 0) box = [x, y, Math.min(w, 1 - x), Math.min(h, 1 - y)];
 		}
-		out.push({ signal: item.signal, asset, evidence, confidence, ...(box ? { box } : {}) });
+		out.push({ signal: item.signal, asset, evidence, confidence, ...(quotes.length ? { quotes } : {}), ...(box ? { box } : {}) });
 	}
 	return out;
 }

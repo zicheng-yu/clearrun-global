@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
-import { planLaunch, type LaunchPlan, type MarketPlan, type WeekScore } from "../engine/launch/plan.ts";
-import { addDays, isoDay, weekLabel } from "../shared/dates.ts";
+import { planLaunch, weekAssessmentLabel, type LaunchPlan, type MarketPlan, type WeekScore } from "../engine/launch/plan.ts";
+import { addDays, isoDay, launchDay, launchDayText, mondayOf } from "../shared/dates.ts";
 import {
 	EVENT_KIND_LABEL,
 	MARKETS,
@@ -23,6 +23,7 @@ const pressureColor = (pressure: number) => "color-mix(in oklab, var(--pressure-
 type WeekSelection = { market: Market; week: string };
 
 function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelection) => void }) {
+	const earliest = plan.request.from;
 	return (
 		<section className="rollout" aria-label="推荐发布周">
 			<h2 className="section-title">
@@ -38,16 +39,26 @@ function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelec
 							{step ? (
 								<button
 									className="rollout-step"
-									aria-label={MARKET_LABEL[m.market] + " " + step.week + " 当周，查看推荐依据"}
+									aria-label={
+										MARKET_LABEL[m.market] +
+										" 发布周起始 " +
+										step.week +
+										"，最早可上线 " +
+										launchDay(step.week, earliest) +
+										"，" +
+										weekAssessmentLabel({ covered: true, clear: step.clear }) +
+										"，查看推荐依据"
+									}
 									onClick={() => onSelect(step)}
 								>
 									<span className="date-tile">
-										<span>{Number(step.week.slice(5, 7))} 月</span>
-										<strong>{Number(step.week.slice(8))}</strong>
+										<span>{Number(launchDay(step.week, earliest).slice(5, 7))} 月</span>
+										<strong>{Number(launchDay(step.week, earliest).slice(8))}</strong>
 									</span>
 									<span>
 										<strong className="step-title">{MARKET_LABEL[m.market]}</strong>
-										<span className="step-market">档期分 {Math.round(step.clear * 100)}</span>
+										<span className="step-market">{launchDayText(step.week, earliest)}</span>
+										<span className="step-market">{weekAssessmentLabel({ covered: true, clear: step.clear })}</span>
 									</span>
 								</button>
 							) : (
@@ -62,6 +73,7 @@ function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelec
 }
 
 function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; selection: WeekSelection; onSelect: (s: WeekSelection) => void }) {
+	const earliest = plan.request.from;
 	const weeks = plan.markets[0].weeks;
 	const columns = { gridTemplateColumns: "repeat(" + weeks.length + ", minmax(0, 1fr))" };
 	return (
@@ -101,13 +113,14 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 										const active = selection.market === m.market && selection.week === w.week;
 										const label =
 											MARKET_LABEL[m.market] +
-											" " +
+											" 发布周起始 " +
 											w.week +
-											" 当周，档期分 " +
-											Math.round(w.clear * 100) +
+											"，最早可上线 " +
+											launchDay(w.week, earliest) +
+											"，" +
+											weekAssessmentLabel(w) +
 											(w.blocks.length ? "，主题冲突" : "") +
-											(m.best.includes(w.week) ? "，推荐周" : "") +
-											(!w.covered ? "，数据不完整" : "");
+											(m.best.includes(w.week) ? "，推荐周" : "");
 										return (
 											<button
 												key={w.week}
@@ -165,28 +178,49 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 	);
 }
 
-function WeekDetail({ week, plan, onSelect }: { week: WeekScore; plan: MarketPlan; onSelect: (s: WeekSelection) => void }) {
+function WeekDetail({
+	week,
+	plan,
+	earliest,
+	coverage,
+	onSelect,
+}: {
+	week: WeekScore;
+	plan: MarketPlan;
+	earliest: string;
+	coverage: { start: string; end: string };
+	onSelect: (s: WeekSelection) => void;
+}) {
 	const total = week.contributors.reduce((sum, c) => sum + c.pressure, 0);
 	return (
 		<section className="week-detail" aria-label="所选周详情">
 			<div className="week-head">
 				<div>
 					<p className="minor-label">所选周 · {MARKET_LABEL[plan.market]}</p>
-					<h2>{weekLabel(week.week)}当周</h2>
+					<h2>{launchDayText(week.week, earliest)}</h2>
 				</div>
 				<div className="week-stats">
-					<span>
-						档期分 <strong>{Math.round(week.clear * 100)}</strong>
-					</span>
-					<span>
-						压力指数 <strong>{Math.round(week.p * 100)}</strong>
-					</span>
+					{week.covered ? (
+						<>
+							<span>
+								档期分 <strong>{Math.round(week.clear * 100)}</strong>
+							</span>
+							<span>
+								压力指数 <strong>{Math.round(week.p * 100)}</strong>
+							</span>
+						</>
+					) : (
+						<span>{weekAssessmentLabel(week)}</span>
+					)}
 				</div>
 			</div>
 			{!week.covered && (
 				<p className="notice">
 					<Icon name="info" />
-					本周的后续传播期超出日历覆盖范围，数据不完整。
+					{week.week < coverage.start
+						? "这一周早于日历覆盖起点 " + coverage.start + "，超出数据范围，不足以评估。"
+						: "这一周的后续传播期超出日历覆盖终点 " + coverage.end + "，超出数据范围，不足以评估。"}
+					无事件不等于低压力，这里不会给出满分推荐。
 				</p>
 			)}
 			{week.blocks.map((b) => {
@@ -236,12 +270,12 @@ function WeekDetail({ week, plan, onSelect }: { week: WeekScore; plan: MarketPla
 						);
 					})}
 				</div>
-			) : (
+			) : week.covered ? (
 				<p className="quiet-note">
 					<Icon name="info" size={15} />
 					已收录事件中，这三周没有与当前受众争夺注意力的事件。
 				</p>
-			)}
+			) : null}
 			{!!week.opportunities.length && (
 				<p className="opportunity-note">顺势窗口 · {week.opportunities.map((id) => eventById(id)?.name).join("、")}</p>
 			)}
@@ -250,7 +284,7 @@ function WeekDetail({ week, plan, onSelect }: { week: WeekScore; plan: MarketPla
 					<span>推荐周</span>
 					{plan.best.map((w) => (
 						<button key={w} aria-pressed={week.week === w} onClick={() => onSelect({ market: plan.market, week: w })}>
-							{weekLabel(w)}
+							{launchDayText(w, earliest)}
 						</button>
 					))}
 				</div>
@@ -432,11 +466,23 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 					</fieldset>
 				</div>
 			)}
+			{mondayOf(from) < from && (
+				<p className="notice">
+					<Icon name="info" />
+					最早上线日是 {from}。它所在发布周从周一 {mondayOf(from)} 起算，推荐日是 {launchDay(mondayOf(from), from)}，不会早于最早上线日。三个市场使用同一套日期。
+				</p>
+			)}
+			{plan.markets.some((m) => m.weeks.some((w) => !w.covered)) && (
+				<p className="notice">
+					<Icon name="info" />
+					日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。超出这段的周不足以评估，不会作为满分推荐。
+				</p>
+			)}
 			<Rollout plan={plan} onSelect={setSelected} />
 			<PressureCalendar plan={plan} selection={selection} onSelect={setSelected} />
-			<WeekDetail plan={detailPlan} week={detailWeek} onSelect={setSelected} />
+			<WeekDetail plan={detailPlan} week={detailWeek} earliest={from} coverage={plan.coverage} onSelect={setSelected} />
 			<p className="coverage-note">
-				日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。档期分与压力指数均为 0–100。
+				日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。覆盖范围内的档期分与压力指数均为 0–100。推荐日不早于最早上线日 {from}。
 			</p>
 		</div>
 	);

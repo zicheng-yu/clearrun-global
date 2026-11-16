@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { intensity, LaunchInputError, normalizeLaunchRequest, planLaunch, planMarket, type LaunchRequest } from "../src/engine/launch/plan.ts";
-import { listMondays, mondayOf, overlapDays } from "../src/shared/dates.ts";
+import { intensity, LaunchInputError, normalizeLaunchRequest, planLaunch, planMarket, weekAssessmentLabel, type LaunchRequest } from "../src/engine/launch/plan.ts";
+import { launchDay, launchDayText, listMondays, mondayOf, overlapDays } from "../src/shared/dates.ts";
 import { eventById } from "../src/shared/knowledge.ts";
 
 const base: LaunchRequest = { markets: ["KR"], segment: "consumer", themes: [], from: "2026-11-23", weeks: 52 };
@@ -71,6 +71,45 @@ describe("launch calendar", () => {
 		const kr = planMarket("KR", base);
 		expect(kr.weeks.at(-1)?.covered).toBe(false);
 		expect(kr.best.every((w) => kr.weeks.find((x) => x.week === w)?.covered)).toBe(true);
+	});
+
+	it("does not recommend a day before 2026-12-02, and shows that day the same way in every market", () => {
+		expect(mondayOf("2026-12-02")).toBe("2026-11-30");
+		expect(launchDay("2026-11-30", "2026-12-02")).toBe("2026-12-02");
+		const plan = planLaunch({ markets: ["US", "SG", "KR"], segment: "prosumer", themes: [], from: "2026-12-02", weeks: 26 });
+		expect(plan.markets.map((market) => market.weeks[0]?.week)).toEqual(["2026-11-30", "2026-11-30", "2026-11-30"]);
+		const labels = plan.markets.map((market) => launchDayText(market.weeks[0]?.week ?? "", plan.request.from));
+		expect(new Set(labels).size).toBe(1);
+		expect(labels[0]).toContain("最早可上线");
+		expect(labels[0]).toContain("12月2日");
+		for (const step of plan.rollout) expect(launchDay(step.week, "2026-12-02") >= "2026-12-02").toBe(true);
+		for (const market of plan.markets) {
+			for (const picked of market.best) expect(launchDay(picked, "2026-12-02") >= "2026-12-02").toBe(true);
+		}
+	});
+
+	it("does not give a full-score recommendation outside the calendar, including 2020-01-01 and the coverage edges", () => {
+		const inside = planLaunch({ markets: ["KR"], segment: "consumer", themes: [], from: "2026-11-10", weeks: 60 });
+		expect(inside.coverage).toEqual({ start: "2026-11-16", end: "2027-10-31" });
+		const before = inside.markets[0]?.weeks.find((item) => item.week < inside.coverage.start);
+		const firstCovered = inside.markets[0]?.weeks.find((item) => item.week >= inside.coverage.start && item.covered);
+		const lastCovered = [...(inside.markets[0]?.weeks ?? [])].reverse().find((item) => item.covered);
+		const after = inside.markets[0]?.weeks.find((item) => item.week > (lastCovered?.week ?? ""));
+		expect(before?.covered).toBe(false);
+		expect(firstCovered?.covered).toBe(true);
+		expect(lastCovered?.covered).toBe(true);
+		expect(after?.covered).toBe(false);
+		expect(weekAssessmentLabel({ covered: false, clear: 1 })).toBe("超出数据范围，不足以评估");
+		expect(weekAssessmentLabel({ covered: false, clear: 1 })).not.toContain("100");
+
+		const outside = planLaunch({ markets: ["KR", "US", "SG"], segment: "consumer", themes: [], from: "2020-01-01", weeks: 13 });
+		expect(outside.rollout).toEqual([]);
+		for (const market of outside.markets) {
+			expect(market.weeks.every((item) => !item.covered)).toBe(true);
+			expect(market.best).toEqual([]);
+			expect(market.weeks.some((item) => item.clear === 1)).toBe(true);
+			expect(market.weeks.every((item) => !market.best.includes(item.week))).toBe(true);
+		}
 	});
 
 	it("validates requests", () => {

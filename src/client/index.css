@@ -776,6 +776,27 @@ mark {
 	padding: 1px 2px;
 	border-radius: 3px;
 }
+mark.medium {
+	background: #4a3d28;
+	color: #f3ddb6;
+}
+mark.low {
+	background: #3a3a44;
+	color: #e4e4ee;
+}
+.locate-miss {
+	display: inline-flex;
+	margin-left: 8px;
+	color: var(--medium);
+	font-size: 12px;
+}
+.annotation.idle {
+	opacity: 0.38;
+}
+.annotation.selected {
+	z-index: 1;
+	outline: 1px solid var(--text);
+}
 .evidence-foot,
 .quiet-note,
 .notice,

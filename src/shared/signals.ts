@@ -2,6 +2,8 @@
  * The signal vocabulary: everything the perception model is allowed to report. The model only says
  * what it sees (a pinch gesture, an absolute accuracy claim); whether that is a problem in a market is
  * decided by knowledge/rules.yaml. Rules and calendar blocks may only reference IDs listed here.
+ * A detected hit's `evidence` may paraphrase what was seen. Exact text to highlight lives in
+ * `quotes` on the detection, and must be copied from the asset.
  */
 
 /** Where a signal is found: in an image, in copy, on the landing/privacy page, or as the creative's overall theme. */

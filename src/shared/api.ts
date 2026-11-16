@@ -9,8 +9,10 @@ export interface DetectedSignal {
 	signal: SignalId;
 	/** The asset it was found in (an ID from the scan request). */
 	asset: string;
-	/** What the model saw or quoted, in a few words. */
+	/** What the model saw, in a few words. This may be a paraphrase and is not assumed to be a substring. */
 	evidence: string;
+	/** Exact substrings copied from the asset. The UI highlights these and does not invent a match from evidence. */
+	quotes?: string[];
 	box?: Box;
 	confidence: number;
 }
