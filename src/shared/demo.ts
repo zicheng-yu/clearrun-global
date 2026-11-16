@@ -3,6 +3,8 @@
  * the perception model is expected to report for that material: the offline demo answers from them, and
  * they double as the expected output when testing the live model against the same assets.
  * Images in public/demo/ are illustrative campaign assets for this fictional product.
+ * SVG and generated images are demo material, not real advertisements. KR, US and SG share
+ * the Mira Agent wordmark, violet orb and navy field; language and local risks stay different.
  */
 import type { DetectedSignal } from "./api.ts";
 import type { Market, Segment } from "./knowledge.ts";
