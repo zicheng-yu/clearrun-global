@@ -1,7 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
-import { planLaunch, weekAssessmentLabel, type LaunchPlan, type MarketPlan, type WeekScore } from "../engine/launch/plan.ts";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { planLaunch, planMarket, recommendationLines, weekAssessmentLabel, type LaunchPlan, type MarketPlan, type WeekScore } from "../engine/launch/plan.ts";
 import { addDays, isoDay, launchDay, launchDayText, mondayOf } from "../shared/dates.ts";
+import { THEME_SCHEDULE_SCRIPT } from "../shared/demo.ts";
 import {
+	CONFIDENCE_LABEL,
 	EVENT_KIND_LABEL,
 	MARKETS,
 	MARKET_LABEL,
@@ -21,6 +23,54 @@ import { OriginNote } from "./OriginNote.tsx";
 const BLOCKING_SIGNALS: SignalId[] = [...new Set(knowledge.calendar.flatMap((e) => e.blocks))];
 const pressureColor = (pressure: number) => "color-mix(in oklab, var(--pressure-high) " + Math.round(pressure * 100) + "%, var(--pressure-low))";
 type WeekSelection = { market: Market; week: string };
+type PlannedDates = Partial<Record<Market, string>>;
+
+function sameThemes(left: SignalId[], right: SignalId[]): boolean {
+	return left.length === right.length && left.every((theme) => right.includes(theme));
+}
+
+function scheduleFingerprint(plan: LaunchPlan): string {
+	return plan.markets
+		.map((market) =>
+			[
+				market.market,
+				market.best.join(","),
+				...market.weeks.map((week) => week.week + ":" + week.blocks.map((block) => block.eventId).join("+") + ":" + Math.round(week.clear * 1000)),
+			].join(";"),
+		)
+		.join("|");
+}
+
+interface CellMarks {
+	system: boolean;
+	planned: boolean;
+	blocked: boolean;
+	uncovered: boolean;
+}
+
+function cellMarks(plan: LaunchPlan, market: Market, week: string, planned: PlannedDates): CellMarks {
+	const row = plan.markets.find((item) => item.market === market);
+	const cell = row?.weeks.find((item) => item.week === week);
+	const plannedWeek = planned[market] ? mondayOf(planned[market]) : "";
+	return {
+		system: plan.rollout.some((step) => step.market === market && step.week === week),
+		planned: plannedWeek === week,
+		blocked: Boolean(cell?.blocks.length),
+		uncovered: cell ? !cell.covered : false,
+	};
+}
+
+const MARK_LABEL: Record<keyof CellMarks, string> = {
+	system: "系统推荐周",
+	planned: "原定周",
+	blocked: "主题阻断周",
+	uncovered: "无数据区域",
+};
+
+function markText(marks: CellMarks): string {
+	const names = (Object.keys(MARK_LABEL) as (keyof CellMarks)[]).filter((key) => marks[key]).map((key) => MARK_LABEL[key]);
+	return names.length ? names.join("、") : "普通档期格";
+}
 
 function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelection) => void }) {
 	const earliest = plan.request.from;
@@ -33,34 +83,43 @@ function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelec
 			<div className="rollout-steps">
 				{plan.markets.map((m, i) => {
 					const step = plan.rollout.find((s) => s.market === m.market);
+					const picked = step ? m.weeks.find((week) => week.week === step.week) : undefined;
+					const reasons = picked ? recommendationLines(picked, m.weeks) : [];
 					return (
 						<Fragment key={m.market}>
 							{i > 0 && <Icon name="arrow" size={16} className="step-arrow" />}
 							{step ? (
-								<button
-									className="rollout-step"
-									aria-label={
-										MARKET_LABEL[m.market] +
-										" 发布周起始 " +
-										step.week +
-										"，最早可上线 " +
-										launchDay(step.week, earliest) +
-										"，" +
-										weekAssessmentLabel({ covered: true, clear: step.clear }) +
-										"，查看推荐依据"
-									}
-									onClick={() => onSelect(step)}
-								>
-									<span className="date-tile">
-										<span>{Number(launchDay(step.week, earliest).slice(5, 7))} 月</span>
-										<strong>{Number(launchDay(step.week, earliest).slice(8))}</strong>
-									</span>
-									<span>
-										<strong className="step-title">{MARKET_LABEL[m.market]}</strong>
-										<span className="step-market">{launchDayText(step.week, earliest)}</span>
-										<span className="step-market">{weekAssessmentLabel({ covered: true, clear: step.clear })}</span>
-									</span>
-								</button>
+								<div className="rollout-reason">
+									<button
+										className="rollout-step"
+										aria-label={
+											MARKET_LABEL[m.market] +
+											" 发布周起始 " +
+											step.week +
+											"，最早可上线 " +
+											launchDay(step.week, earliest) +
+											"，" +
+											weekAssessmentLabel({ covered: true, clear: step.clear }) +
+											"，查看推荐依据"
+										}
+										onClick={() => onSelect(step)}
+									>
+										<span className="date-tile">
+											<span>{Number(launchDay(step.week, earliest).slice(5, 7))} 月</span>
+											<strong>{Number(launchDay(step.week, earliest).slice(8))}</strong>
+										</span>
+										<span>
+											<strong className="step-title">{MARKET_LABEL[m.market]}</strong>
+											<span className="step-market">{launchDayText(step.week, earliest)}</span>
+											<span className="step-market">{weekAssessmentLabel({ covered: true, clear: step.clear })}</span>
+										</span>
+									</button>
+									<ul className="reason-list">
+										{reasons.map((line) => (
+											<li key={line}>{line}</li>
+										))}
+									</ul>
+								</div>
 							) : (
 								<span className="rollout-empty">{MARKET_LABEL[m.market]} · 当前条件下没有可推荐的周</span>
 							)}
@@ -72,7 +131,17 @@ function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelec
 	);
 }
 
-function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; selection: WeekSelection; onSelect: (s: WeekSelection) => void }) {
+function PressureCalendar({
+	plan,
+	selection,
+	planned,
+	onSelect,
+}: {
+	plan: LaunchPlan;
+	selection: WeekSelection;
+	planned: PlannedDates;
+	onSelect: (s: WeekSelection) => void;
+}) {
 	const earliest = plan.request.from;
 	const weeks = plan.markets[0].weeks;
 	const columns = { gridTemplateColumns: "repeat(" + weeks.length + ", minmax(0, 1fr))" };
@@ -111,6 +180,7 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 								<div className="heat-grid" style={columns}>
 									{m.weeks.map((w) => {
 										const active = selection.market === m.market && selection.week === w.week;
+										const marks = cellMarks(plan, m.market, w.week, planned);
 										const label =
 											MARKET_LABEL[m.market] +
 											" 发布周起始 " +
@@ -120,7 +190,11 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 											"，" +
 											weekAssessmentLabel(w) +
 											(w.blocks.length ? "，主题冲突" : "") +
-											(m.best.includes(w.week) ? "，推荐周" : "");
+											(m.best.includes(w.week) ? "，推荐周" : "") +
+											(marks.system ? "，系统推荐周" : "") +
+											(marks.planned ? "，原定周" : "") +
+											(marks.blocked ? "，主题阻断周" : "") +
+											(marks.uncovered ? "，无数据区域" : "");
 										return (
 											<button
 												key={w.week}
@@ -130,6 +204,8 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 												className={[
 													"week-cell",
 													m.best.includes(w.week) ? "recommended" : "",
+													marks.system ? "system-pick" : "",
+													marks.planned ? "planned" : "",
 													w.blocks.length ? "blocked" : "",
 													!w.covered ? "uncovered" : "",
 												].join(" ")}
@@ -148,7 +224,7 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 						))}
 					</div>
 				</div>
-				<div className="calendar-key">
+				<div className="calendar-key" aria-label="当前格图例">
 					<span className="pressure-key">
 						低压力{" "}
 						{[0, 0.33, 0.66, 1].map((n) => (
@@ -156,22 +232,20 @@ function PressureCalendar({ plan, selection, onSelect }: { plan: LaunchPlan; sel
 						))}{" "}
 						高压力
 					</span>
-					<span>
-						<i className="key-best" />
-						推荐周
-					</span>
-					<span>
-						<i className="key-launch" />
-						上线周
-					</span>
-					<span>
-						<i className="key-block" />
-						主题冲突
-					</span>
+					{(Object.keys(MARK_LABEL) as (keyof CellMarks)[]).map((key) => {
+						const on = cellMarks(plan, selection.market, selection.week, planned)[key];
+						return (
+							<span key={key} aria-current={on ? "true" : undefined} className={on ? "legend-on" : undefined}>
+								<i className={"key-" + key} />
+								{MARK_LABEL[key]}
+							</span>
+						);
+					})}
 					<span>
 						<i className="dot green" />
 						顺势窗口
 					</span>
+					<p className="legend-current">当前格：{markText(cellMarks(plan, selection.market, selection.week, planned))}</p>
 				</div>
 			</div>
 		</section>
@@ -183,21 +257,25 @@ function WeekDetail({
 	plan,
 	earliest,
 	coverage,
+	marks,
 	onSelect,
 }: {
 	week: WeekScore;
 	plan: MarketPlan;
 	earliest: string;
 	coverage: { start: string; end: string };
+	marks: CellMarks;
 	onSelect: (s: WeekSelection) => void;
 }) {
 	const total = week.contributors.reduce((sum, c) => sum + c.pressure, 0);
+	const reasons = recommendationLines(week, plan.weeks);
 	return (
 		<section className="week-detail" aria-label="所选周详情">
 			<div className="week-head">
 				<div>
 					<p className="minor-label">所选周 · {MARKET_LABEL[plan.market]}</p>
 					<h2>{week.covered ? launchDayText(week.week, earliest) : "超出数据范围，不足以评估"}</h2>
+					<p className="legend-current">当前格：{markText(marks)}</p>
 				</div>
 				<div className="week-stats">
 					{week.covered ? (
@@ -206,13 +284,26 @@ function WeekDetail({
 								档期分 <strong>{Math.round(week.clear * 100)}</strong>
 							</span>
 							<span>
-								压力指数 <strong>{Math.round(week.p * 100)}</strong>
+								模型计算的档期压力指数 <strong>{Math.round(week.p * 100)}</strong>
 							</span>
 						</>
 					) : (
 						<span>{weekAssessmentLabel(week)}</span>
 					)}
 				</div>
+			</div>
+			<div className="reason-block" aria-label="所选周解释" aria-live="polite">
+				<h3>{week.week} 这一周为什么是现在这样</h3>
+				<p>
+					发布周起始 {week.week}
+					{week.covered ? `，档期分 ${Math.round(week.clear * 100)}，模型计算的档期压力指数 ${Math.round(week.p * 100)}。` : "，超出数据范围，不足以评估。"}
+				</p>
+				<ul className="reason-list">
+					{reasons.map((line) => (
+						<li key={line}>{line}</li>
+					))}
+				</ul>
+				{week.covered && <p className="scope-note">压力指数是模型计算的档期压力指数，不是真实市场注意力百分比。</p>}
 			</div>
 			{!week.covered && (
 				<p className="notice">
@@ -273,7 +364,7 @@ function WeekDetail({
 			) : week.covered ? (
 				<p className="quiet-note">
 					<Icon name="info" size={15} />
-					已收录事件中，这三周没有与当前受众争夺注意力的事件。
+					已收录事件里，这三周没有会抬高档期压力指数的撞档。
 				</p>
 			) : null}
 			{!!week.opportunities.length && (
@@ -294,26 +385,98 @@ function WeekDetail({
 }
 
 export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onReturn?: () => void }) {
+	const perceived = handoff?.themes ?? [];
 	const [markets, setMarkets] = useState<Market[]>(handoff?.markets ?? ["US", "SG", "KR"]);
 	const [segment, setSegment] = useState<Segment>(handoff?.segment ?? "prosumer");
-	const [themes, setThemes] = useState<SignalId[]>(handoff?.themes ?? []);
+	const [themes, setThemes] = useState<SignalId[]>(perceived);
 	const [from, setFrom] = useState(() => addDays(isoDay(new Date()), 14));
 	const [weeks, setWeeks] = useState(26);
 	const [selected, setSelected] = useState<WeekSelection>();
 	const [filtersOpen, setFiltersOpen] = useState(false);
+	const [planned, setPlanned] = useState<PlannedDates>({});
+	const [scheduleNote, setScheduleNote] = useState("");
+	const [weekChange, setWeekChange] = useState("");
+	const [flashWeek, setFlashWeek] = useState("");
+	const interacted = useRef(false);
+	const previousFingerprint = useRef<string | null>(null);
+	const previousScript = useRef<{ blocked: boolean; clear: number } | null>(null);
 
-	const plan = useMemo(() => planLaunch({ markets, segment, themes, from, weeks }), [markets, segment, themes, from, weeks]);
+	const yours = Object.fromEntries(Object.entries(planned).filter((entry): entry is [string, string] => Boolean(entry[1]))) as Partial<Record<Market, string>>;
+	const plan = useMemo(
+		() => planLaunch({ markets, segment, themes, from, weeks, ...(Object.keys(yours).length ? { yours } : {}) }),
+		[markets, segment, themes, from, weeks, planned],
+	);
 	const first = plan.rollout[0];
 	const selectedMarket = plan.markets.find((m) => m.market === selected?.market && m.weeks.some((w) => w.week === selected?.week));
 	const detailPlan = selectedMarket ?? plan.markets.find((m) => m.market === first?.market) ?? plan.markets[0];
-	const detailWeek = detailPlan.weeks.find((w) => w.week === (selectedMarket ? selected?.week : first?.week)) ?? detailPlan.weeks[0];
-	const selection = { market: detailPlan.market, week: detailWeek.week };
+	const detailWeek = detailPlan?.weeks.find((w) => w.week === (selectedMarket ? selected?.week : first?.week)) ?? detailPlan?.weeks[0];
+	const selection = { market: detailPlan?.market ?? markets[0] ?? "US", week: detailWeek?.week ?? "" };
 	const toggleMarket = (m: Market) =>
 		setMarkets((current) => {
 			if (!current.includes(m)) return [...current, m];
 			return current.length > 1 ? current.filter((v) => v !== m) : current;
 		});
-	const toggleTheme = (s: SignalId) => setThemes((current) => (current.includes(s) ? current.filter((v) => v !== s) : [...current, s]));
+	const scriptEvent = eventById(THEME_SCHEDULE_SCRIPT.eventId);
+	const scriptWeek = scriptEvent ? mondayOf(scriptEvent.start) : "";
+	const scriptScore = useMemo(() => {
+		if (!scriptWeek) return undefined;
+		return planMarket("SG", { markets: ["SG"], segment, themes, from: scriptWeek, weeks: 1 }).weeks[0];
+	}, [scriptWeek, segment, themes]);
+	const modified = !sameThemes(themes, perceived);
+	const added = themes.filter((theme) => !perceived.includes(theme));
+	const removed = perceived.filter((theme) => !themes.includes(theme));
+	const hypothesis = !added.length && !removed.length
+		? "还没有偏离感知结果的假设。"
+		: [removed.length ? "去掉 " + removed.map(signalLabel).join("、") : "", added.length ? "加上 " + added.map(signalLabel).join("、") : ""]
+				.filter(Boolean)
+				.join("；");
+	useEffect(() => {
+		const scriptSig = scriptScore
+			? scriptScore.blocks.map((block) => block.eventId).join("+") + ":" + Math.round(scriptScore.clear * 1000)
+			: "";
+		const fingerprint = scheduleFingerprint(plan) + "#" + scriptSig;
+		if (interacted.current && previousFingerprint.current === fingerprint) setScheduleNote("排期结果未变化");
+		else if (interacted.current) setScheduleNote("");
+		previousFingerprint.current = fingerprint;
+	}, [plan, scriptScore]);
+	useEffect(() => {
+		if (!scriptScore || !scriptEvent) return;
+		const blocked = scriptScore.blocks.some((block) => block.eventId === scriptEvent.id);
+		const previous = previousScript.current;
+		if (interacted.current && previous && (previous.blocked !== blocked || previous.clear !== scriptScore.clear)) {
+			const next = blocked ? "主题阻断" : "未阻断";
+			const was = previous.blocked ? "主题阻断" : "未阻断";
+			const score = previous.clear === scriptScore.clear ? "档期分没有变化。" : "";
+			setWeekChange(`同一周由${was}变为${next}。${score}`);
+			setFlashWeek(scriptWeek);
+		}
+		previousScript.current = { blocked, clear: scriptScore.clear };
+	}, [scriptScore, scriptEvent, scriptWeek]);
+	const toggleTheme = (s: SignalId) => {
+		interacted.current = true;
+		setThemes((current) => (current.includes(s) ? current.filter((v) => v !== s) : [...current, s]));
+	};
+	const setScriptTheme = (on: boolean) => {
+		interacted.current = true;
+		const signal = THEME_SCHEDULE_SCRIPT.signal;
+		setThemes((current) => (on ? (current.includes(signal) ? current : [...current, signal]) : current.filter((theme) => theme !== signal)));
+	};
+	const restoreThemes = () => {
+		interacted.current = true;
+		setThemes(perceived);
+	};
+	const verdict = detailPlan?.verdict;
+	const plannedDay = planned[selection.market] ?? "";
+	const scriptBaseline = scriptWeek
+		? planMarket("SG", {
+				markets: ["SG"],
+				segment,
+				themes: themes.filter((theme) => theme !== THEME_SCHEDULE_SCRIPT.signal),
+				from: scriptWeek,
+				weeks: 1,
+			}).weeks[0]
+		: undefined;
+	const scriptScoreUnchanged = Boolean(scriptScore && scriptBaseline && scriptBaseline.clear === scriptScore.clear);
 
 	return (
 		<div className="workspace-page planner-page">
@@ -335,7 +498,8 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 						<OriginNote phase="ready" source={handoff.origin} model={handoff.model} fallbackModel={handoff.fallbackModel} />
 						{handoff.themes.length > 0 && (
 							<details>
-								<summary>{handoff.themes.length} 个素材信号</summary>
+								<summary>感知结果 · {handoff.themes.length} 个素材信号</summary>
+								<p>这是检测带入的主题，不是当前模拟条件。</p>
 								<p>{handoff.themes.map(signalLabel).join("、")}</p>
 							</details>
 						)}
@@ -482,11 +646,121 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 					日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。超出这段的周不足以评估，不会作为满分推荐。
 				</p>
 			)}
+			{scriptEvent && scriptScore && scriptWeek && (
+				<section className="whatif-panel" aria-label="主题与档期假设">
+					<h2 className="section-title">主题如何改变同一周</h2>
+					<dl className="whatif-sources">
+						<div>
+							<dt>感知结果</dt>
+							<dd>{perceived.length ? perceived.map(signalLabel).join("、") : "这次排期没有从素材检测带入主题。"}</dd>
+						</div>
+						<div>
+							<dt>用户 what-if 假设</dt>
+							<dd>{hypothesis}</dd>
+						</div>
+						<div>
+							<dt>当前模拟条件</dt>
+							<dd>
+								{themes.length ? themes.map(signalLabel).join("、") : "无主题"}
+								{modified ? "（已修改）" : "（与感知结果一致）"}
+							</dd>
+						</div>
+					</dl>
+					{modified && (
+						<button type="button" className="button" onClick={restoreThemes}>
+							恢复检测条件
+						</button>
+					)}
+					<article className="whatif-week" data-changed={flashWeek === scriptWeek ? "true" : "false"}>
+						<h3>
+							候选周 {scriptWeek}
+							{scriptScore.blocks.some((block) => block.eventId === scriptEvent.id) ? " · 主题阻断周" : " · 未阻断"}
+						</h3>
+						<p>
+							事件「{scriptEvent.name}」{scriptEvent.start} 至 {scriptEvent.end}，{CONFIDENCE_LABEL[scriptEvent.confidence]}。规则{" "}
+							{scriptEvent.rules.join("、")}。知识库事件 {scriptEvent.id}。
+							{scriptEvent.note ? scriptEvent.note + "。" : ""}
+						</p>
+						<p>
+							{scriptScore.blocks.some((block) => block.eventId === scriptEvent.id)
+								? `当前模拟条件含「${signalLabel(THEME_SCHEDULE_SCRIPT.signal)}」，这一周被该事件阻断，不会进入推荐。`
+								: "当前模拟条件不会触发这条阻断。同一周可以进入候选。"}
+						</p>
+						<p className="scope-note">
+							这一周档期分 {Math.round(scriptScore.clear * 100)}。
+							{scriptScoreUnchanged ? "加上或去掉该主题不会改变这一周的档期分。" : ""}
+						</p>
+						{weekChange && <p className="whatif-change">{weekChange}</p>}
+						{scheduleNote && <p className="whatif-change">{scheduleNote}</p>}
+						<button
+							type="button"
+							className="button primary"
+							onClick={() => setScriptTheme(!themes.includes(THEME_SCHEDULE_SCRIPT.signal))}
+						>
+							{themes.includes(THEME_SCHEDULE_SCRIPT.signal) ? "去掉猪肉主题，重算同一周" : "加上猪肉主题，重算同一周"}
+						</button>
+					</article>
+				</section>
+			)}
+			{detailPlan && detailWeek && (
+				<section className="plan-compare" aria-label="原定周与推荐周">
+					<h2 className="section-title">原定周和推荐周</h2>
+					<label className="form-field">
+						<span>{MARKET_LABEL[selection.market]}原定上线日期</span>
+						<input
+							type="date"
+							aria-label="原定上线日期"
+							value={plannedDay}
+							onChange={(event) => {
+								const day = event.target.value;
+								const market = selection.market;
+								setPlanned((current) => ({ ...current, [market]: day }));
+								if (!day) return;
+								const week = mondayOf(day);
+								const row = plan.markets.find((item) => item.market === market);
+								if (row?.weeks.some((item) => item.week === week)) setSelected({ market, week });
+							}}
+						/>
+					</label>
+					<p className="scope-note">这是你打算上线的日期，会归到它所在的周一发布周，再和系统推荐周比较。留空表示这一市场还没有原定周。</p>
+					{plannedDay && detailPlan.weeks.some((week) => week.week === mondayOf(plannedDay)) && verdict ? (
+						<div className="planned-verdict">
+							<h3>{verdict.hold ? "建议保留原定周" : "建议调整原定周"}</h3>
+							<p>
+								{verdict.hold
+									? `原定 ${launchDayText(verdict.week, from)} 没有被主题阻断，并且接近当前最清晰的一周（${launchDayText(verdict.best, from)}）。`
+									: `原定 ${launchDayText(verdict.week, from)} 不如 ${launchDayText(verdict.best, from)}。建议改到 ${launchDayText(verdict.best, from)}。`}
+							</p>
+						</div>
+					) : plannedDay && detailPlan.weeks.some((week) => week.week === mondayOf(plannedDay)) ? (
+						<p className="notice">
+							<Icon name="info" />
+							原定周已在当前范围内，但还没有另一周可以比较。
+						</p>
+					) : plannedDay ? (
+						<p className="notice">
+							<Icon name="info" />
+							原定日期不在当前规划范围内，无法和推荐周比较。可以扩大范围或改日期。
+						</p>
+					) : (
+						<p className="scope-note">还没有原定周。填入日期后，这里会说明建议保留还是调整。</p>
+					)}
+				</section>
+			)}
 			<Rollout plan={plan} onSelect={setSelected} />
-			<PressureCalendar plan={plan} selection={selection} onSelect={setSelected} />
-			<WeekDetail plan={detailPlan} week={detailWeek} earliest={from} coverage={plan.coverage} onSelect={setSelected} />
+			<PressureCalendar plan={plan} selection={selection} planned={planned} onSelect={setSelected} />
+			{detailPlan && detailWeek && (
+				<WeekDetail
+					plan={detailPlan}
+					week={detailWeek}
+					earliest={from}
+					coverage={plan.coverage}
+					marks={cellMarks(plan, selection.market, selection.week, planned)}
+					onSelect={setSelected}
+				/>
+			)}
 			<p className="coverage-note">
-				日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。覆盖范围内的档期分与压力指数均为 0–100。推荐日不早于最早上线日 {from}。
+				日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。覆盖范围内的档期分与模型计算的档期压力指数均为 0–100，压力指数不是真实市场注意力百分比。推荐日不早于最早上线日 {from}。
 			</p>
 		</div>
 	);

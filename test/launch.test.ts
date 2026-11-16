@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { intensity, LaunchInputError, normalizeLaunchRequest, planLaunch, planMarket, weekAssessmentLabel, type LaunchRequest } from "../src/engine/launch/plan.ts";
+import { intensity, LaunchInputError, normalizeLaunchRequest, planLaunch, planMarket, recommendationLines, weekAssessmentLabel, type LaunchRequest } from "../src/engine/launch/plan.ts";
 import { launchDay, launchDayText, listMondays, mondayOf, overlapDays } from "../src/shared/dates.ts";
 import { eventById } from "../src/shared/knowledge.ts";
 
@@ -110,6 +110,34 @@ describe("launch calendar", () => {
 			expect(market.weeks.some((item) => item.clear === 1)).toBe(true);
 			expect(market.weeks.every((item) => !market.best.includes(item.week))).toBe(true);
 		}
+	});
+
+	it("blocks the Singapore Ramadan week for pork and clears that same week without inventing a score drop", () => {
+		const themed = planMarket("SG", { markets: ["SG"], segment: "consumer", themes: ["food.pork"], from: "2027-02-08", weeks: 1 });
+		const blocked = week(themed, "2027-02-08");
+		expect(blocked?.week).toBe(mondayOf("2027-02-08"));
+		expect(blocked?.blocks.map((block) => block.eventId)).toContain("sg-ramadan-2027");
+		expect(blocked?.blocks[0]?.rules).toContain("SG-R02");
+		expect(recommendationLines(blocked!, themed.weeks).join(" ")).toContain("斋月");
+		const cleared = planMarket("SG", { markets: ["SG"], segment: "consumer", themes: [], from: "2027-02-08", weeks: 1 });
+		const open = week(cleared, "2027-02-08");
+		expect(open?.blocks).toEqual([]);
+		expect(open?.clear).toBe(blocked?.clear);
+		expect(recommendationLines(open!, cleared.weeks).join(" ")).not.toContain("不推荐");
+	});
+
+	it("tells a blocked planned week to move", () => {
+		const blocked = planMarket("SG", {
+			markets: ["SG"],
+			segment: "consumer",
+			themes: ["food.pork"],
+			from: "2027-02-01",
+			weeks: 8,
+			yours: { SG: "2027-02-08" },
+		});
+		expect(blocked.verdict?.hold).toBe(false);
+		expect(blocked.verdict?.week).toBe("2027-02-08");
+		expect(blocked.verdict?.best).not.toBe("2027-02-08");
 	});
 
 	it("validates requests", () => {

@@ -6,7 +6,17 @@
  * Pure functions shared by the Worker and the browser, so what-ifs recompute instantly.
  */
 import { addDays, daysBetween, listMondays, mondayOf, overlapDays } from "../../shared/dates.ts";
-import { audienceOf, knowledge, MARKETS, SEGMENTS, type CalendarEvent, type EventKind, type Market, type Segment } from "../../shared/knowledge.ts";
+import {
+	audienceOf,
+	CONFIDENCE_LABEL,
+	knowledge,
+	MARKETS,
+	SEGMENTS,
+	type CalendarEvent,
+	type EventKind,
+	type Market,
+	type Segment,
+} from "../../shared/knowledge.ts";
 import { isSignalId, type SignalId } from "../../shared/signals.ts";
 
 /** Weight of each week of your launch's buzz: launch week, then the two after it (an AI launch fades fast). */
@@ -224,6 +234,55 @@ function scoreWeek(events: CalendarEvent[], week: string, request: LaunchRequest
 export function weekAssessmentLabel(week: Pick<WeekScore, "covered" | "clear">): string {
 	if (!week.covered) return "超出数据范围，不足以评估";
 	return "档期分 " + Math.round(week.clear * 100);
+}
+
+function eventOf(events: CalendarEvent[], id: string): CalendarEvent | undefined {
+	return events.find((event) => event.id === id);
+}
+
+/** Conflicts on other weeks that this week does not carry. Empty when this week is itself blocked or uncovered. */
+export function avoidedConflicts(week: WeekScore, peers: WeekScore[], events: CalendarEvent[] = knowledge.calendar): string[] {
+	if (!week.covered || week.blocks.length) return [];
+	const lines: string[] = [];
+	const seen = new Set<string>();
+	for (const other of peers) {
+		for (const block of other.blocks) {
+			if (seen.has(block.eventId) || week.blocks.some((item) => item.eventId === block.eventId)) continue;
+			seen.add(block.eventId);
+			const event = eventOf(events, block.eventId);
+			if (!event) continue;
+			lines.push(`避开「${event.name}」（${event.start} 至 ${event.end}，规则 ${block.rules.join("、")}）`);
+			if (lines.length >= 2) return lines;
+		}
+	}
+	return lines;
+}
+
+/**
+ * At most two reasons for a week: a block, the main pressure source, or a conflict this week avoids.
+ * Pressure here is the model's index, not a measured share of market attention.
+ */
+export function recommendationLines(week: WeekScore, peers: WeekScore[], events: CalendarEvent[] = knowledge.calendar): string[] {
+	if (!week.covered) return ["超出知识库覆盖范围，这一周不会被推荐。"];
+	const block = week.blocks[0];
+	const blockedBy = block ? eventOf(events, block.eventId) : undefined;
+	if (block && blockedBy) {
+		return [
+			`不推荐：被「${blockedBy.name}」阻断（${blockedBy.start} 至 ${blockedBy.end}，${CONFIDENCE_LABEL[blockedBy.confidence]}，规则 ${block.rules.join("、")}）。`,
+		];
+	}
+	const lines: string[] = [];
+	const avoided = avoidedConflicts(week, peers, events);
+	if (avoided[0]) lines.push(avoided[0]);
+	const top = week.contributors[0];
+	const source = top ? eventOf(events, top.eventId) : undefined;
+	if (source) {
+		const when = source.start === source.end ? source.start : `${source.start} 至 ${source.end}`;
+		lines.push(`压力主要来自「${source.name}」（${CONFIDENCE_LABEL[source.confidence]}，${when}）。这是模型计算的档期压力指数。`);
+	} else if (!lines.length) {
+		lines.push("已收录事件里，没有会抬高这一周压力指数的撞档。");
+	}
+	return lines.slice(0, 2);
 }
 
 /** Top weeks by score, at least `gap` weeks apart. Ties keep calendar order. */

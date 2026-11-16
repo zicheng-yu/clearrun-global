@@ -9,7 +9,7 @@ import { Icon } from "./Icon.tsx";
 import type { UploadedMaterial } from "./MaterialImport.tsx";
 import { OriginNote } from "./OriginNote.tsx";
 import { knownScanSource, preferScanSource } from "./origin.ts";
-import { ReviewPanel } from "./ReviewPanel.tsx";
+import { CompareBoard, ReviewPanel } from "./ReviewPanel.tsx";
 import { LEVEL_LABEL, MarketSelect } from "./ui.tsx";
 
 export type { LaunchHandoff };
@@ -54,6 +54,8 @@ function Verdict({ report, before, market, error, retry, origin, children }: Ver
 	const high = report.findings.filter((f) => f.rule.severity === "high").length;
 	const medium = report.findings.filter((f) => f.rule.severity === "medium").length;
 	const low = report.findings.length - high - medium;
+	const hits = report.findings.length;
+	const headline = hits === 0 ? "当前规则未命中已知风险" : report.level === "green" && low ? "可考虑使用，留意下列提示" : LEVEL_LABEL[report.level];
 	return (
 		<section className={"verdict " + report.level} aria-label="预检结论" aria-live="polite">
 			<div className="decision">
@@ -62,12 +64,15 @@ function Verdict({ report, before, market, error, retry, origin, children }: Ver
 				</div>
 				<div>
 					<p className="minor-label">{MARKET_LABEL[market]}市场 · 预检结论</p>
-					<h2>{report.level === "green" && low ? "可考虑使用，留意下列提示" : LEVEL_LABEL[report.level]}</h2>
+					<h2>{headline}</h2>
+					<p className="hit-line">
+						已命中 {hits} 项 · 待处理 {hits} 项
+					</p>
 					{origin}
 				</div>
 			</div>
 			<div className="risk-breakdown">
-				<p className="minor-label">命中风险</p>
+				<p className="minor-label">严重度</p>
 				<div>
 					{!!high && (
 						<span>
@@ -87,20 +92,24 @@ function Verdict({ report, before, market, error, retry, origin, children }: Ver
 							{low} 项注意
 						</span>
 					)}
-					{!report.findings.length && (
+					{!hits && (
 						<span>
-							<i className="dot green" />0 项
+							<i className="dot green" />
+							当前规则未命中
 						</span>
 					)}
 				</div>
 			</div>
 			<div className="score">
-				<div className="minor-label">预检分</div>
+				<div className="minor-label">基于当前知识库规则的预检评分</div>
 				<div className="score-number">
 					{before && before.score !== report.score && <small>{before.score} → </small>}
 					<strong>{report.score}</strong>
 					<span> / 100</span>
 				</div>
+				<p className="score-note">
+					{report.score === 100 ? "100 表示当前规则未命中已知风险，不是合规认证，也不保证通过。" : "分数只反映已收录规则的扣分，不是投放许可。"}
+				</p>
 			</div>
 			<div className="verdict-actions">{children}</div>
 		</section>
@@ -119,6 +128,7 @@ interface ScanProps {
 
 export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise, onPlanLaunch }: ScanProps) {
 	const [variant, setVariant] = useState<Variant>("original");
+	const [compare, setCompare] = useState(false);
 	const [attempt, setAttempt] = useState(0);
 	const [state, setState] = useState<FixtureState>();
 	const scope = [demo.id, market, attempt].join("/");
@@ -148,6 +158,7 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 	const scanError = own ? undefined : fixture?.error;
 	const result = signals && assess(signals, [market]);
 	const report = result?.markets[0];
+	const marketReports = signals ? assess(signals, ["KR", "US", "SG"]).markets : undefined;
 	const before = !own && variant === "localized" && fixture?.signals ? assess(fixture.signals.original, [market]).markets[0] : undefined;
 	const assets = own?.assets ?? demo[variant].assets;
 	const title = own?.title ?? demo.title;
@@ -157,6 +168,15 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 	const phase = signals ? "ready" : scanError ? "error" : "pending";
 	const origin = <OriginNote phase={phase} source={source} model={model} fallbackModel={fallbackModel} />;
 	const showRevision = report && report.level !== "green" && (Boolean(own) || variant === "original");
+	const originalSignals = own ? undefined : (fixture?.signals?.original ?? demo.original.signals);
+	const localizedSignals = own ? undefined : (fixture?.signals?.localized ?? demo.localized.signals);
+	const compared =
+		compare && originalSignals && localizedSignals
+			? {
+					before: assess(originalSignals, [market]).markets[0],
+					after: assess(localizedSignals, [market]).markets[0],
+				}
+			: undefined;
 	const plan = () => {
 		if (!result || !report) return;
 		onPlanLaunch(
@@ -182,16 +202,47 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 						{own ? "自有素材" : "示例素材"}
 					</p>
 					<h1>{title}</h1>
+					<p className="purpose-line">
+						ClearRun 检查同一份素材在韩国、美国、新加坡可能碰到的不同规则。
+						{own ? "下面是你上传的素材。" : `${PRODUCT} 是被检查的演示项目，不是这个工具。`}
+					</p>
 				</div>
 				<button className="button" onClick={onImport}>
 					<Icon name="plus" />
 					新建预检
 				</button>
 			</div>
+			<section className="market-cards" aria-label="三市场规则评估">
+				{(["KR", "US", "SG"] as const).map((code) => {
+					const card = marketReports?.find((item) => item.market === code);
+					const count = card ? `已命中 ${card.findings.length} 项` : "读取中";
+					return (
+						<button
+							key={code}
+							type="button"
+							className="market-card"
+							aria-pressed={market === code}
+							aria-label={`${MARKET_LABEL[code]}市场，${count}`}
+							onClick={() => onMarketChange(code)}
+						>
+							<strong>
+								{MARKET_LABEL[code]} · {code}
+							</strong>
+							<span>{count}</span>
+							{card && <span>待处理 {card.findings.length} 项</span>}
+						</button>
+					);
+				})}
+			</section>
+			<p className="cross-market-note">
+				{signals && market !== (own?.market ?? demo.focus)
+					? `同批信号的跨市场规则评估：下面把当前素材已识别的信号套用到${MARKET_LABEL[market]}规则，不是对${MARKET_LABEL[market]}重新做了一次完整感知。`
+					: `三张卡使用同一批已识别信号，分别套用韩国、美国、新加坡的规则。当前是${own ? "这次检测选定的市场" : "示例焦点"}${MARKET_LABEL[own?.market ?? demo.focus]}。换市场只换规则，不重新感知。`}
+			</p>
 			<div className="review-toolbar">
 				<div className="review-properties">
 					<MarketSelect value={market} onChange={onMarketChange} />
-					{!own && (
+					{!own && !compare && (
 						<div className="property">
 							<span>版本</span>
 							<div className="segmented" role="group" aria-label="素材版本">
@@ -203,21 +254,70 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 							</div>
 						</div>
 					)}
+					{!own && compare && (
+						<button type="button" className="button" onClick={() => setCompare(false)}>
+							返回单版预检
+						</button>
+					)}
 				</div>
 			</div>
+			{compared?.before && compared.after ? (
+				<section className={"verdict " + compared.after.level} aria-label="预检结论" aria-live="polite">
+					<div className="decision">
+						<div className="decision-icon">
+							<Icon name={compared.after.findings.length ? "alert" : "shield"} size={22} />
+						</div>
+						<div>
+							<p className="minor-label">{MARKET_LABEL[market]}市场 · 原版与本地化修订示例</p>
+							<h2>
+								{compared.before.findings.length} 项已知风险 → {compared.after.findings.length} 项已命中风险
+							</h2>
+							<p className="hit-line">
+								原版已命中 {compared.before.findings.length} 项 · 修订示例待处理 {compared.after.findings.length} 项
+							</p>
+							{origin}
+							<p className="scope-note">
+								这是预置的本地化修订示例，不会自动改写素材，也不是现场生成。
+								{compared.after.findings.length === 0
+									? " 0 项表示当前规则未命中已知风险，不是保证通过。"
+									: " 变化只统计当前知识库规则。"}
+							</p>
+						</div>
+					</div>
+					<div className="score">
+						<div className="minor-label">基于当前知识库规则的预检评分</div>
+						<div className="score-number">
+							<small>{compared.before.score} → </small>
+							<strong>{compared.after.score}</strong>
+							<span> / 100</span>
+						</div>
+						<p className="score-note">
+							{compared.after.score === 100
+								? "100 表示当前规则未命中已知风险，不是合规认证，也不保证通过。"
+								: "分数只反映已收录规则的扣分，不是投放许可。"}
+						</p>
+					</div>
+					<div className="verdict-actions">
+						<button className="button primary" onClick={plan}>
+							查看发布排期
+							<Icon name="arrow" size={14} />
+						</button>
+					</div>
+				</section>
+			) : (
 			<Verdict report={report} before={before} market={market} error={scanError} origin={origin} retry={() => setAttempt((n) => n + 1)}>
-				{showRevision && (
+				{showRevision && !compare && (
 					<button
 						className="button primary"
-						title={own ? undefined : "打开预置的修订示例，不会自动改写素材"}
-						onClick={own ? onRevise : () => setVariant("localized")}
+						title={own ? undefined : "打开预置的本地化修订示例。这不会自动改写素材，也不是现场生成。"}
+						onClick={own ? onRevise : () => setCompare(true)}
 					>
 						<Icon name="version" size={15} />
-						{own ? "修改并复检" : "查看修订示例"}
+						{own ? "修改并复检" : "比较原版与修订示例"}
 						<Icon name="arrow" size={14} />
 					</button>
 				)}
-				<button className={showRevision ? "plan-link" : "button primary"} onClick={plan}>
+				<button className={showRevision && !compare ? "plan-link" : "button primary"} onClick={plan}>
 					查看发布排期
 					<Icon name="arrow" size={14} />
 				</button>
@@ -227,16 +327,27 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 					</button>
 				)}
 			</Verdict>
-			<ReviewPanel
-				key={market + "/" + variant}
-				assets={assets}
-				signals={signals ?? []}
-				before={before}
-				report={report}
-				result={result}
-				market={market}
-				error={scanError}
-			/>
+			)}
+			{compare && !own && (
+				<CompareBoard
+					demo={demo}
+					market={market}
+					originalSignals={fixture?.signals?.original ?? demo.original.signals}
+					localizedSignals={fixture?.signals?.localized ?? demo.localized.signals}
+				/>
+			)}
+			{!compare && (
+				<ReviewPanel
+					key={market + "/" + variant}
+					assets={assets}
+					signals={signals ?? []}
+					before={before}
+					report={report}
+					result={result}
+					market={market}
+					error={scanError}
+				/>
+			)}
 		</div>
 	);
 }
