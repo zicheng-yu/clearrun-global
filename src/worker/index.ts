@@ -4,6 +4,7 @@ import type { Health, ScanResponse } from "../shared/api.ts";
 import { isoDay } from "../shared/dates.ts";
 import { demoCase } from "../shared/demo.ts";
 import { knowledge, MARKETS, type Market } from "../shared/knowledge.ts";
+import { demoScanSource, modelAnswerMeta } from "../shared/scan-source.ts";
 import { BudgetExhaustedError, DEFAULT_MODEL, LlmError, type LlmConfig } from "./openrouter.ts";
 import { checkAssets, perceive, PerceiveInputError } from "./perceive.ts";
 import { llmSpend } from "./store.ts";
@@ -79,7 +80,7 @@ app.post("/scan", async (c) => {
 		const demo = typeof body.demo.caseId === "string" ? demoCase(body.demo.caseId) : undefined;
 		if (!demo) return c.json({ error: "bad_request", message: "Unknown demo case" }, 400);
 		const variant = body.demo.variant === "localized" ? demo.localized : demo.original;
-		const response: ScanResponse = { signals: variant.signals, source: "fixture" };
+		const response: ScanResponse = { signals: variant.signals, source: demoScanSource(c.env.SCAN_MODE) };
 		return c.json(response, 200, { "Cache-Control": "no-store" });
 	}
 
@@ -89,8 +90,14 @@ app.post("/scan", async (c) => {
 	try {
 		const assets = checkAssets(body.assets);
 		const { signals, model } = await perceive(c.env.DB, llm, assets);
-		log("scan", { assets: assets.length, signals: signals.length, model });
-		const response: ScanResponse = { signals, source: "model", ...(model ? { model } : {}) };
+		const answered = modelAnswerMeta(model, llm.model);
+		log("scan", { assets: assets.length, signals: signals.length, model: answered.model, fallbackModel: answered.fallbackModel });
+		const response: ScanResponse = {
+			signals,
+			source: "model",
+			...(answered.model ? { model: answered.model } : {}),
+			...(answered.fallbackModel ? { fallbackModel: true } : {}),
+		};
 		return c.json(response, 200, { "Cache-Control": "no-store" });
 	} catch (error) {
 		if (error instanceof PerceiveInputError) return c.json({ error: "bad_request", message: error.message }, 400);
@@ -102,6 +109,8 @@ app.post("/scan", async (c) => {
 		throw error;
 	}
 });
+
+export { app as api };
 
 export default {
 	fetch: (request, env, ctx) => app.fetch(request, env, ctx),

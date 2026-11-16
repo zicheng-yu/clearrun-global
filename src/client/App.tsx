@@ -98,11 +98,11 @@ function WorkspaceInfo({ health, error, onClose }: { health?: Health; error?: st
 				<h3>检测服务</h3>
 				<p>
 					{error
-						? "无法连接检测服务。"
+						? "无法连接检测服务，当前没有可展示的实时分析结果。"
 						: health?.scan === "live"
-							? "自有素材由多模态模型提取信号，规则库给出市场判断。"
+							? "服务可用时，自有素材可由多模态模型提取信号，规则库给出市场判断。顶栏只表示服务状态；每次预检会单独标明预置示例、实时分析或离线演示。"
 							: health
-								? "离线示例使用预置检测信号，发布档期在浏览器中计算。"
+								? "当前是离线演示，使用预置检测信号，不是实时分析。发布档期在浏览器中计算。"
 								: "正在读取服务状态…"}
 				</p>
 				{health?.model && <p className="mono">{health.model}</p>}
@@ -164,6 +164,14 @@ export function App() {
 		upload,
 		onView: open,
 		onMaterial: (id) => {
+			const picked = demoCase(id);
+			const switching = id !== materialId;
+			if (picked) setMarket(picked.focus);
+			else if (id === "upload" && upload && switching) setMarket(upload.market);
+			if (switching || picked) {
+				setReviewRun((n) => n + 1);
+				setPlanner(null);
+			}
 			setMaterialId(id);
 			open("creative");
 		},
@@ -175,10 +183,18 @@ export function App() {
 		setMarket(target);
 		setMaterialId(id);
 		setReviewRun((n) => n + 1);
+		setPlanner(null);
 		open("creative");
 	};
 	const mode = health.data?.scan;
-	const serviceLabel = health.error ? "服务不可用" : mode === "live" ? "实时检测" : mode === "offline" ? "离线演示" : "连接中";
+	const serviceLabel = health.error ? "服务不可用" : mode === "live" ? "服务可用" : mode === "offline" ? "离线演示" : "连接中";
+	const serviceTitle = health.error
+		? "检测服务不可用。当前没有实时分析结果。"
+		: mode === "live"
+			? "检测服务可用。这只说明服务状态，不代表当前结果来自实时分析。"
+			: mode === "offline"
+				? "离线演示。结果来自预置信号，不是实时分析。"
+				: "正在连接检测服务。";
 
 	return (
 		<div className="app-shell">
@@ -199,7 +215,7 @@ export function App() {
 						<span className="crumb-slash">/</span>
 						<span>{VIEW_LABEL[view]}</span>
 					</div>
-					<span className={"service-status " + (mode === "live" ? "connected" : "")}>
+					<span className={"service-status " + (mode === "live" ? "connected" : "")} title={serviceTitle}>
 						<i />
 						{serviceLabel}
 					</span>
@@ -222,7 +238,7 @@ export function App() {
 					</div>
 					{planner && (
 						<div hidden={view !== "launch"}>
-							<LaunchView key={planner.revision} handoff={planner.handoff} />
+							<LaunchView key={planner.revision} handoff={planner.handoff} onReturn={() => open("creative")} />
 						</div>
 					)}
 				</main>
@@ -243,7 +259,7 @@ export function App() {
 					onClose={() => setModal(null)}
 					onDemo={startReview}
 					onResult={(next, target) => {
-						setUpload(next);
+						setUpload({ ...next, market: target });
 						startReview("upload", target);
 					}}
 				/>

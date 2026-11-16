@@ -41,8 +41,9 @@ npm run dev
 模型 ID 在 [`cloudflare.config.ts`](cloudflare.config.ts) 的 `VISION_MODEL` 里配置，上线前到 openrouter.ai 确认一下。每次调用前都会检查 D1 里的花费台账（日上限 $1、总上限 $10）。
 
 **部署前注意**：
-- Worker 名已改为 `clearrun-global`，不会覆盖原 ClearRun。
-- live 模式的 D1 ID 是占位值，要先建一个 D1 数据库，再把 ID 填进去。
+- Worker 名是 `clearrun-global`。不要部署到原 ClearRun 的 Worker `clearrun`，也不要复用 `clearrun.zichengyu.com` 上的数据库、密钥或定时任务。
+- 不带 `--mode mock` 的 `cf build` / `cf deploy` 仍是 live 配置：声明 `OPENROUTER_API_KEY`，D1 仍是占位 id，不声明演示域名。
+- 演示配置只在 `--mode mock` 生效。它使用空库 `clearrun-global-demo`（`1537b307-566a-40fc-8bf9-04ae80dac074`），并声明自定义域名 `global-clearrun.zichengyu.com`。配置本身不会创建 DNS，也不会上传 Worker。发布步骤见 [`deploy/mock/PUBLISH.md`](deploy/mock/PUBLISH.md)。
 
 ## 知识库
 

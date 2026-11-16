@@ -14,8 +14,9 @@ import {
 	type Segment,
 } from "../shared/knowledge.ts";
 import { signalLabel, type SignalId } from "../shared/signals.ts";
+import { marketActionLabel, marketStatusText, type LaunchHandoff } from "./handoff.ts";
 import { Icon } from "./Icon.tsx";
-import type { LaunchHandoff } from "./ScanView.tsx";
+import { OriginNote } from "./OriginNote.tsx";
 
 const BLOCKING_SIGNALS: SignalId[] = [...new Set(knowledge.calendar.flatMap((e) => e.blocks))];
 const pressureColor = (pressure: number) => "color-mix(in oklab, var(--pressure-high) " + Math.round(pressure * 100) + "%, var(--pressure-low))";
@@ -258,7 +259,7 @@ function WeekDetail({ week, plan, onSelect }: { week: WeekScore; plan: MarketPla
 	);
 }
 
-export function LaunchView({ handoff }: { handoff?: LaunchHandoff }) {
+export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onReturn?: () => void }) {
 	const [markets, setMarkets] = useState<Market[]>(handoff?.markets ?? ["US", "SG", "KR"]);
 	const [segment, setSegment] = useState<Segment>(handoff?.segment ?? "prosumer");
 	const [themes, setThemes] = useState<SignalId[]>(handoff?.themes ?? []);
@@ -291,19 +292,65 @@ export function LaunchView({ handoff }: { handoff?: LaunchHandoff }) {
 					排期条件
 				</button>
 			</div>
-			{handoff && (
-				<div className="source-material">
-					<Icon name="stack" size={15} />
-					<span>已带入素材</span>
-					<strong>{handoff.source}</strong>
-					{handoff.themes.length > 0 && (
-						<details>
-							<summary>{handoff.themes.length} 个素材信号</summary>
-							<p>{handoff.themes.map(signalLabel).join("、")}</p>
-						</details>
-					)}
+			<section className="precheck-bridge" aria-label="素材预检与上线市场">
+				{handoff ? (
+					<div className="source-material">
+						<Icon name="stack" size={15} />
+						<span>已带入素材</span>
+						<strong>{handoff.source}</strong>
+						<OriginNote phase="ready" source={handoff.origin} model={handoff.model} fallbackModel={handoff.fallbackModel} />
+						{handoff.themes.length > 0 && (
+							<details>
+								<summary>{handoff.themes.length} 个素材信号</summary>
+								<p>{handoff.themes.map(signalLabel).join("、")}</p>
+							</details>
+						)}
+						{onReturn && (
+							<button type="button" className="button" onClick={onReturn}>
+								返回修改素材
+							</button>
+						)}
+					</div>
+				) : (
+					<p className="notice">
+						<Icon name="info" />
+						这次排期没有素材预检。下面的市场都尚未做素材预检，档期建议不代表素材已审核通过。
+					</p>
+				)}
+				<div className="market-scope">
+					<p className="minor-label">上线市场</p>
+					<div className="choices" role="group" aria-label="添加上线市场">
+						{MARKETS.map((m) => {
+							const included = markets.includes(m);
+							const reviewed = handoff?.reviewed.some((review) => review.market === m) ?? false;
+							return (
+								<button
+									key={m}
+									type="button"
+									aria-pressed={included}
+									aria-label={marketActionLabel(m, included, markets.length === 1, reviewed)}
+									disabled={included && markets.length === 1}
+									onClick={() => toggleMarket(m)}
+								>
+									{included ? MARKET_LABEL[m] : "添加" + MARKET_LABEL[m]}
+								</button>
+							);
+						})}
+					</div>
+					<ul className="market-status">
+						{MARKETS.map((m) => {
+							const review = handoff?.reviewed.find((item) => item.market === m);
+							const scheduled = markets.includes(m);
+							const state = !review ? "unreviewed" : review.remaining === 0 ? "clear" : "open";
+							return (
+								<li key={m} data-state={state}>
+									{marketStatusText(m, review, scheduled)}
+								</li>
+							);
+						})}
+					</ul>
 				</div>
-			)}
+			</section>
 			{!filtersOpen && (
 				<div className="plan-properties">
 					<span>

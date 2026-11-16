@@ -1,26 +1,26 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { assess, type MarketAssessment } from "../engine/creative/assess.ts";
-import type { DetectedSignal } from "../shared/api.ts";
+import type { DetectedSignal, ScanSource } from "../shared/api.ts";
 import { PRODUCT, type DemoCase } from "../shared/demo.ts";
-import { MARKET_LABEL, type Market, type Segment } from "../shared/knowledge.ts";
-import type { SignalId } from "../shared/signals.ts";
+import { MARKET_LABEL, type Market } from "../shared/knowledge.ts";
 import { scan } from "./api.ts";
+import { buildLaunchHandoff, type LaunchHandoff } from "./handoff.ts";
 import { Icon } from "./Icon.tsx";
 import type { UploadedMaterial } from "./MaterialImport.tsx";
+import { OriginNote } from "./OriginNote.tsx";
+import { knownScanSource, preferScanSource } from "./origin.ts";
 import { ReviewPanel } from "./ReviewPanel.tsx";
 import { LEVEL_LABEL, MarketSelect } from "./ui.tsx";
 
-export interface LaunchHandoff {
-	markets: Market[];
-	segment: Segment;
-	themes: SignalId[];
-	source: string;
-}
+export type { LaunchHandoff };
 
 type Variant = "original" | "localized";
 interface FixtureState {
 	scope: string;
 	signals?: Record<Variant, DetectedSignal[]>;
+	source?: ScanSource;
+	model?: string;
+	fallbackModel?: boolean;
 	error?: string;
 }
 
@@ -33,13 +33,14 @@ interface VerdictProps {
 	children: ReactNode;
 }
 
-function Verdict({ report, before, market, error, retry, children }: VerdictProps) {
+function Verdict({ report, before, market, error, retry, origin, children }: VerdictProps & { origin: ReactNode }) {
 	if (!report) {
 		return (
 			<div className="verdict pending" role="status">
 				<Icon name={error ? "alert" : "scan"} size={20} />
 				<div>
 					<div className="minor-label">{MARKET_LABEL[market]} · 预检结论</div>
+					{origin}
 					<p>{error || "正在检查素材…"}</p>
 				</div>
 				{error && (
@@ -62,6 +63,7 @@ function Verdict({ report, before, market, error, retry, children }: VerdictProp
 				<div>
 					<p className="minor-label">{MARKET_LABEL[market]}市场 · 预检结论</p>
 					<h2>{report.level === "green" && low ? "可考虑使用，留意下列提示" : LEVEL_LABEL[report.level]}</h2>
+					{origin}
 				</div>
 			</div>
 			<div className="risk-breakdown">
@@ -126,7 +128,14 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 		const fetchVariant = (v: Variant) => scan({ markets: [market], demo: { caseId: demo.id, variant: v } }, controller.signal);
 		Promise.all([fetchVariant("original"), fetchVariant("localized")])
 			.then(([original, localized]) => {
-				if (!controller.signal.aborted) setState({ scope, signals: { original: original.signals, localized: localized.signals } });
+				if (controller.signal.aborted) return;
+				setState({
+					scope,
+					signals: { original: original.signals, localized: localized.signals },
+					source: preferScanSource([knownScanSource(original.source), knownScanSource(localized.source)]),
+					model: original.model ?? localized.model,
+					fallbackModel: Boolean(original.fallbackModel || localized.fallbackModel),
+				});
 			})
 			.catch((e: unknown) => {
 				if (!controller.signal.aborted) setState({ scope, error: e instanceof Error ? e.message : "读取检测结果失败。" });
@@ -136,20 +145,31 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 
 	const fixture = state?.scope === scope ? state : undefined;
 	const signals = own?.signals ?? fixture?.signals?.[variant];
+	const scanError = own ? undefined : fixture?.error;
 	const result = signals && assess(signals, [market]);
 	const report = result?.markets[0];
 	const before = !own && variant === "localized" && fixture?.signals ? assess(fixture.signals.original, [market]).markets[0] : undefined;
 	const assets = own?.assets ?? demo[variant].assets;
 	const title = own?.title ?? demo.title;
+	const source = own?.source ?? fixture?.source;
+	const model = own?.model ?? fixture?.model;
+	const fallbackModel = own?.fallbackModel ?? fixture?.fallbackModel;
+	const phase = signals ? "ready" : scanError ? "error" : "pending";
+	const origin = <OriginNote phase={phase} source={source} model={model} fallbackModel={fallbackModel} />;
 	const showRevision = report && report.level !== "green" && (Boolean(own) || variant === "original");
 	const plan = () => {
-		if (!result) return;
-		onPlanLaunch({
-			markets: [market],
-			segment: own ? "prosumer" : demo.segment,
-			themes: result.themes,
-			source: own?.title ?? title + "（" + demo[variant].label + "）",
-		});
+		if (!result || !report) return;
+		onPlanLaunch(
+			buildLaunchHandoff({
+				segment: own ? "prosumer" : demo.segment,
+				themes: result.themes,
+				material: own?.title ?? title + "（" + demo[variant].label + "）",
+				report,
+				origin: source ?? "fallback",
+				model,
+				fallbackModel,
+			}),
+		);
 	};
 	return (
 		<div className="workspace-page">
@@ -185,11 +205,15 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 					)}
 				</div>
 			</div>
-			<Verdict report={report} before={before} market={market} error={fixture?.error} retry={() => setAttempt((n) => n + 1)}>
+			<Verdict report={report} before={before} market={market} error={scanError} origin={origin} retry={() => setAttempt((n) => n + 1)}>
 				{showRevision && (
-					<button className="button primary" onClick={own ? onRevise : () => setVariant("localized")}>
+					<button
+						className="button primary"
+						title={own ? undefined : "打开预置的修订示例，不会自动改写素材"}
+						onClick={own ? onRevise : () => setVariant("localized")}
+					>
 						<Icon name="version" size={15} />
-						{own ? "修改并复检" : "对照修订版"}
+						{own ? "修改并复检" : "查看修订示例"}
 						<Icon name="arrow" size={14} />
 					</button>
 				)}
@@ -211,7 +235,7 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 				report={report}
 				result={result}
 				market={market}
-				error={fixture?.error}
+				error={scanError}
 			/>
 		</div>
 	);

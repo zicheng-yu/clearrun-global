@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Georgia, 'Songti SC', serif">
+  <rect width="1600" height="900" fill="#2b2621"/>
+  <g>
+    <rect x="32" y="90" width="500" height="600" rx="10" fill="#e9dccb"/>
+    <rect x="550" y="90" width="500" height="600" rx="10" fill="#e3d6c3"/>
+    <rect x="1068" y="90" width="500" height="600" rx="10" fill="#ddcfba"/>
+  </g>
+  <!-- three different performers: distinct faces, hair and build -->
+  <g stroke="#4a3f36" stroke-width="3">
+    <path d="M182 520 C182 430 382 430 382 520 L382 690 L182 690 Z" fill="#6f8a9a"/>
+    <circle cx="282" cy="330" r="92" fill="#f0d2b0"/>
+    <path d="M210 270 C220 220 344 220 354 270 C330 250 234 250 210 270 Z" fill="#3a3a3a"/>
+    <path d="M690 530 C690 440 910 440 910 530 L910 690 L690 690 Z" fill="#b5566a"/>
+    <ellipse cx="800" cy="335" rx="84" ry="96" fill="#d9a77c"/>
+    <path d="M708 300 C708 210 892 210 892 300 L892 420 C870 380 730 380 708 420 Z" fill="#5c7f6e"/>
+    <path d="M1206 520 C1206 420 1430 420 1430 520 L1430 690 L1206 690 Z" fill="#c9a24a"/>
+    <circle cx="1318" cy="326" r="100" fill="#9c6b48"/>
+    <path d="M1222 300 C1230 220 1406 220 1414 300 C1380 262 1256 262 1222 300 Z" fill="#2b2621"/>
+  </g>
+  <g fill="#2b2621">
+    <circle cx="250" cy="320" r="8"/><circle cx="314" cy="320" r="8"/>
+    <circle cx="772" cy="330" r="7"/><circle cx="828" cy="330" r="7"/>
+    <circle cx="1282" cy="318" r="9"/><circle cx="1354" cy="318" r="9"/>
+  </g>
+  <g fill="none" stroke="#2b2621" stroke-width="5" stroke-linecap="round">
+    <path d="M252 372 Q282 392 312 372"/><path d="M776 378 Q800 394 824 378"/><path d="M1284 370 Q1318 396 1352 370"/>
+  </g>
+  <!-- table with kaya toast and kopi in panel 1 -->
+  <rect x="62" y="600" width="440" height="80" rx="8" fill="#8b6a4f"/>
+  <rect x="150" y="610" width="130" height="40" rx="8" fill="#e8b96a" stroke="#6b4a2f" stroke-width="3"/>
+  <rect x="160" y="624" width="110" height="10" rx="5" fill="#7fa35a"/>
+  <rect x="320" y="596" width="70" height="64" rx="10" fill="#f4ede2" stroke="#4a3f36" stroke-width="3"/>
+  <rect x="330" y="606" width="50" height="16" rx="6" fill="#6b4a2f"/>
+  <g font-size="26" fill="#2b2621">
+    <text x="62" y="135">华人演员</text>
+    <text x="580" y="135">马来演员</text>
+    <text x="1098" y="135">印度演员</text>
+    <text x="86" y="590" font-size="20" fill="#5b5148">咖椰吐司 · 咖啡</text>
+  </g>
+  <rect x="0" y="780" width="1600" height="80" fill="#1c1815"/>
+  <text x="800" y="832" font-size="34" fill="#f4ede2" text-anchor="middle">Mira speaks your language — 华语 · Bahasa Melayu · தமிழ் · English</text>
+  <rect x="24" y="24" width="290" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
+  <text x="44" y="51" font-size="20" fill="#8a7f73">示意图 · 视频关键帧（重拍）</text>
+</svg>
