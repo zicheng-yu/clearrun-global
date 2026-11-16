@@ -100,10 +100,11 @@ interface PreviewProps {
 	signals: DetectedSignal[];
 	findings: Finding[];
 	active?: Finding;
+	illustrative?: boolean;
 	onFinding: (finding: Finding) => void;
 }
 
-function AssetContent({ asset, signals, findings, active, onFinding }: PreviewProps) {
+function AssetContent({ asset, signals, findings, active, illustrative, onFinding }: PreviewProps) {
 	const mine = signals.filter((s) => s.asset === asset.id);
 	if (asset.kind !== "image") {
 		const selected = active?.signals.filter((s) => s.asset === asset.id) ?? [];
@@ -122,6 +123,7 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 	}
 	return (
 		<div className="artboard">
+			{illustrative && <p className="demo-asset-note">演示素材，不是真实广告</p>}
 			<div className="artwork">
 				<img src={asset.content} alt={asset.label} />
 				{mine.map((s, i) => {
@@ -160,9 +162,10 @@ interface ReviewProps {
 	before?: MarketAssessment;
 	market: Market;
 	error?: string;
+	illustrative?: boolean;
 }
 
-export function ReviewPanel({ assets, signals, result, report, before, market, error }: ReviewProps) {
+export function ReviewPanel({ assets, signals, result, report, before, market, error, illustrative }: ReviewProps) {
 	const [selection, setSelection] = useState<{ asset: string; rule?: string }>();
 	const [dialog, setDialog] = useState<"rule" | "preview" | null>(null);
 	const previewSection = useRef<HTMLElement>(null);
@@ -176,7 +179,7 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 		const nextAsset = f.signals.some((s) => s.asset === asset.id) ? asset.id : f.signals[0].asset;
 		setSelection({ asset: nextAsset, rule: f.rule.id });
 	};
-	const previewProps: PreviewProps = { asset, signals, findings, active, onFinding: selectFinding };
+	const previewProps: PreviewProps = { asset, signals, findings, active, illustrative, onFinding: selectFinding };
 	const evidence = active?.signals.filter((s) => s.asset === asset.id) ?? [];
 	return (
 		<div className="review-grid">
@@ -388,6 +391,7 @@ function ComparePane({
 							signals={signals}
 							findings={findings}
 							active={active}
+							illustrative
 							onFinding={(finding) => setRule(finding.rule.id)}
 						/>
 					</div>

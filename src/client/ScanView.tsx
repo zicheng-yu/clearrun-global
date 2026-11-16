@@ -346,6 +346,7 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 					result={result}
 					market={market}
 					error={scanError}
+					illustrative={!own}
 				/>
 			)}
 		</div>

@@ -1,9 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Georgia, 'Songti SC', serif">
-  <rect width="1600" height="900" fill="#2b2621"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, PingFang SC, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#140e3a"/>
+      <stop offset="1" stop-color="#2a1868"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
   <g>
-    <rect x="32" y="90" width="500" height="600" rx="10" fill="#e9dccb"/>
-    <rect x="550" y="90" width="500" height="600" rx="10" fill="#e3d6c3"/>
-    <rect x="1068" y="90" width="500" height="600" rx="10" fill="#ddcfba"/>
+    <rect x="32" y="90" width="500" height="600" rx="10" fill="#ece7ff"/>
+    <rect x="550" y="90" width="500" height="600" rx="10" fill="#e4def8"/>
+    <rect x="1068" y="90" width="500" height="600" rx="10" fill="#ddd6f3"/>
   </g>
   <!-- three different performers: distinct faces, hair and build -->
   <g stroke="#4a3f36" stroke-width="3">
@@ -37,8 +43,8 @@
     <text x="1098" y="135">印度演员</text>
     <text x="86" y="590" font-size="20" fill="#5b5148">咖椰吐司 · 咖啡</text>
   </g>
-  <rect x="0" y="780" width="1600" height="80" fill="#1c1815"/>
-  <text x="800" y="832" font-size="34" fill="#f4ede2" text-anchor="middle">Mira speaks your language — 华语 · Bahasa Melayu · தமிழ் · English</text>
-  <rect x="24" y="24" width="290" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
-  <text x="44" y="51" font-size="20" fill="#8a7f73">示意图 · 视频关键帧（重拍）</text>
+  <rect x="0" y="780" width="1600" height="80" fill="#120a28"/>
+  <text x="800" y="832" font-size="34" fill="#f4f2ff" text-anchor="middle">Mira Agent · Mira speaks your language — 华语 · Bahasa Melayu · தமிழ் · English</text>
+  <rect x="24" y="24" width="292" height="40" rx="20" fill="#efeaff"/>
+  <text x="44" y="51" font-size="20" fill="#241a52">演示素材 · 本地化修订示例</text>
 </svg>
