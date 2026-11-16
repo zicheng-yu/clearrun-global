@@ -1,6 +1,6 @@
 e9b538f4b371ced77af56eb2ec1a54087764daf9ce65089fba0085fec9b01dfa  v0/config.json
+75e3c32c73ffbb590a02b05ccf5ffaf1d7073ed913ae227e339a8308aa820b28  v0/workers/default/assets/assets/index-C8Cbc2KN.js
 e8628aa7da4659f353edff42412d48b36bed07d380d088aa2671d3ed1ef1aec4  v0/workers/default/assets/assets/index-DmK_7SkH.css
-25b157ffcda666df6798491f21ba6da360cbc89b816b563ea46e4e1f8860e99d  v0/workers/default/assets/assets/index-L_AIbA-0.js
 ed4e784cfcae78a84cf09a72b793c831bdd88e4adda9b24394d742045d6dfdba  v0/workers/default/assets/demo/a-kv-global.svg
 34be4d12695c4acfc8f7ebfdbe44e84320b0928552aed7147013bd49471440a7  v0/workers/default/assets/demo/a-kv-kr.svg
 f721716cc4b785b87d43ad01cb13cef53ebd0750da2183a74c0ea651e4723e56  v0/workers/default/assets/demo/b-hero-fixed.svg
@@ -10,7 +10,7 @@ f56b1f1de3373aa219a4a35bcd17c64b13024ada700ca3dac74ac397235d27d0  v0/workers/def
 3edc102b054bb53e1c4e963582380709a22221a5a251b3e8249681668a14f42f  v0/workers/default/assets/demo/mira-global.webp
 50f177a741b71f55720dfc7e1d963ed12a188832a30bfb1633a107b925ad6a9e  v0/workers/default/assets/demo/mira-kr.webp
 23d5812d516c873bedd65430a62f49696e6ebc8acdfc09f2ce104ef4b6310987  v0/workers/default/assets/favicon.svg
-a122fcfe262b74230feff08b23d164b0d3c3ddbb3a624d5796515f212b56bdd8  v0/workers/default/assets/index.html
+b0a053422db386f6ea451b0d3ba2860e76f471558064a005534a14ae6ea00e50  v0/workers/default/assets/index.html
 1af95859b73d185fbeb7cdcc234249e19b2f883286d0ae5b3f4b1351b6f3119e  v0/workers/default/bundle/index.js
 e01a2a4316879eb16c6ca7e65108efa3dcb53d8ee72bf67fe704b0cd2ccb556f  v0/workers/default/bundle/index.js.map
 adc6cbede6ffdd0f4ff071c941fea1448fb726fc5b86039b8a41b4b97a5a22a1  v0/workers/default/bundle/.vite/manifest.json

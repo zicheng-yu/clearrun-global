@@ -197,7 +197,7 @@ function WeekDetail({
 			<div className="week-head">
 				<div>
 					<p className="minor-label">所选周 · {MARKET_LABEL[plan.market]}</p>
-					<h2>{launchDayText(week.week, earliest)}</h2>
+					<h2>{week.covered ? launchDayText(week.week, earliest) : "超出数据范围，不足以评估"}</h2>
 				</div>
 				<div className="week-stats">
 					{week.covered ? (
@@ -469,7 +469,11 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 			{mondayOf(from) < from && (
 				<p className="notice">
 					<Icon name="info" />
-					最早上线日是 {from}。它所在发布周从周一 {mondayOf(from)} 起算，推荐日是 {launchDay(mondayOf(from), from)}，不会早于最早上线日。三个市场使用同一套日期。
+					最早上线日是 {from}。它所在发布周从周一 {mondayOf(from)} 起算。
+					{plan.markets.some((m) => m.weeks[0]?.week === mondayOf(from) && m.weeks[0]?.covered)
+						? "推荐日是 " + launchDay(mondayOf(from), from) + "，不会早于最早上线日。"
+						: "这一周超出数据范围，不足以评估，不会推荐。"}
+					三个市场使用同一套日期。
 				</p>
 			)}
 			{plan.markets.some((m) => m.weeks.some((w) => !w.covered)) && (
