@@ -1,15 +1,16 @@
 import { bindings, defineConfig } from "cf/config";
 import * as entrypoint from "./src/worker/index.ts" with { type: "cf-worker" };
+import { CLOUDFLARE_ACCOUNT_ID, modeTarget } from "./src/shared/deploy-target.ts";
 
 export default defineConfig(({ mode }) => {
-	// `cf dev --mode mock` is the offline demo: the three demo cases answer from fixtures, with no keys and
-	// no network. Live mode adds the multimodal perception model over OpenRouter for your own material.
-	// Secrets are uploaded separately and never committed.
-	const mock = mode === "mock";
+	// Default mode is live. Mock is opt-in (`cf dev|build|deploy --mode mock`) and is the only
+	// mode that names the demo hostname or the empty demo D1. Declaring them here does not deploy
+	// or create DNS. Never point this Worker at the original `clearrun` Worker or its database.
+	const target = modeTarget(mode);
 	return {
+		accountId: CLOUDFLARE_ACCOUNT_ID,
 		worker: {
-			// A new Worker: never "clearrun", which would overwrite the original ClearRun deployment.
-			name: "clearrun-global",
+			name: target.workerName,
 			compatibilityDate: "2026-10-06",
 			compatibilityFlags: ["nodejs_compat"],
 			entrypoint,
@@ -17,25 +18,23 @@ export default defineConfig(({ mode }) => {
 				notFoundHandling: "single-page-application",
 				runWorkerFirst: ["/api/*"],
 			},
+			// Custom domain only for the mock demo. A string domain is production traffic on that hostname.
+			...(target.domains.length ? { domains: target.domains } : {}),
 			observability: {
 				enabled: true,
 				logs: { enabled: true, headSamplingRate: 1 },
 			},
 			env: {
-				SCAN_MODE: bindings.text<"mock" | "live">(mock ? "mock" : "live"),
+				SCAN_MODE: bindings.text<"mock" | "live">(target.scanMode),
 				// OpenRouter model IDs for the perception step (needs vision), and fallbacks. Check the IDs on openrouter.ai before going live.
 				VISION_MODEL: bindings.text("anthropic/claude-sonnet-5.5"),
 				VISION_FALLBACK_MODELS: bindings.text("anthropic/claude-haiku-5.5"),
 				// Spending caps in US dollars, enforced before every model call (ledger in D1).
 				LLM_DAILY_USD: bindings.text("1"),
 				LLM_TOTAL_USD: bindings.text("10"),
-				...(mock ? {} : { OPENROUTER_API_KEY: bindings.secret() }),
+				...(target.requiresOpenRouterSecret ? { OPENROUTER_API_KEY: bindings.secret() } : {}),
 				ASSETS: bindings.assets(),
-				// The offline demo keeps its own local database. Before the first live deploy, create a D1 database
-				// for this app and put its ID here (the placeholder is not a real database).
-				DB: bindings.d1(
-					mock ? { id: "00000000-0000-4000-8000-000000000de0", name: "clearrun-global-demo" } : { id: "00000000-0000-4000-8000-00000000c1a0", name: "clearrun-global-db" },
-				),
+				DB: bindings.d1({ id: target.d1.id, name: target.d1.name }),
 				// Per-IP limit on model calls.
 				RATE_LIMITER: bindings.rateLimit({ namespace: "7312", simple: { limit: 10, period: 60 } }),
 			},

@@ -66,7 +66,7 @@ export interface WeekScore {
 	opportunities: string[];
 	/** True when an estimated (not yet announced) event is among the top contributors. */
 	estimated: boolean;
-	/** False once the run reaches past the end of the calendar data. */
+	/** False when the launch week or its two follow-on weeks fall outside the calendar data. */
 	covered: boolean;
 }
 
@@ -173,7 +173,7 @@ export function weekPressure(events: CalendarEvent[], monday: string, segment: S
 	return { total, parts };
 }
 
-function scoreWeek(events: CalendarEvent[], week: string, request: LaunchRequest, coverageEnd: string): WeekScore {
+function scoreWeek(events: CalendarEvent[], week: string, request: LaunchRequest, coverageStart: string, coverageEnd: string): WeekScore {
 	const byEvent = new Map<string, number>();
 	let pressure = 0;
 	LAUNCH_RUN.forEach((weight, j) => {
@@ -216,8 +216,14 @@ function scoreWeek(events: CalendarEvent[], week: string, request: LaunchRequest
 		contributors,
 		opportunities,
 		estimated: top.some((e) => e?.confidence === "estimated"),
-		covered: addDays(week, 7 * LAUNCH_RUN.length - 1) <= coverageEnd,
+		covered: coverageStart !== "" && week >= coverageStart && addDays(week, 7 * LAUNCH_RUN.length - 1) <= coverageEnd,
 	};
+}
+
+/** Shown instead of a score when the week is outside the calendar. Uncovered weeks are never recommendations. */
+export function weekAssessmentLabel(week: Pick<WeekScore, "covered" | "clear">): string {
+	if (!week.covered) return "超出数据范围，不足以评估";
+	return "档期分 " + Math.round(week.clear * 100);
 }
 
 /** Top weeks by score, at least `gap` weeks apart. Ties keep calendar order. */
@@ -246,8 +252,9 @@ export function verdict(weeks: WeekScore[], yourWeek: string): Verdict | undefin
 
 export function planMarket(market: Market, request: LaunchRequest, events: CalendarEvent[] = knowledge.calendar): MarketPlan {
 	const mine = events.filter((e) => e.market === market);
+	const coverageStart = events.reduce((min, e) => (min === "" || e.start < min ? e.start : min), "");
 	const coverageEnd = events.reduce((max, e) => (e.end > max ? e.end : max), "");
-	const weeks = listMondays(request.from, request.weeks).map((week) => scoreWeek(mine, week, request, coverageEnd));
+	const weeks = listMondays(request.from, request.weeks).map((week) => scoreWeek(mine, week, request, coverageStart, coverageEnd));
 	const yours = request.yours?.[market];
 	const first = weeks[0]?.week ?? request.from;
 	return {

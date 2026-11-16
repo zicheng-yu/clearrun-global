@@ -29,6 +29,25 @@ export function listMondays(from: string, count: number): string[] {
 	return Array.from({ length: count }, (_, i) => addDays(first, i * 7));
 }
 
+/**
+ * The first day in the Monday-start week that is not before `earliest`.
+ * The week may open on a Monday earlier than the user's earliest launch date;
+ * that Monday is the week label, not a day we can recommend.
+ */
+export function launchDay(weekMonday: string, earliest: string): string {
+	if (earliest <= weekMonday) return weekMonday;
+	const sunday = addDays(weekMonday, 6);
+	if (earliest > sunday) return weekMonday;
+	return earliest;
+}
+
+/** Same wording for every market: week start (Monday) and the actual earliest launch day. */
+export function launchDayText(weekMonday: string, earliest: string): string {
+	const day = launchDay(weekMonday, earliest);
+	if (day === weekMonday) return `${weekLabel(weekMonday)}当周（周一）`;
+	return `最早可上线 ${weekLabel(day)}（发布周起始 ${weekLabel(weekMonday)}，周一）`;
+}
+
 /** Days of the inclusive range [start, end] that fall in the week starting `monday`. */
 export function overlapDays(start: string, end: string, monday: string): number {
 	const from = Math.max(dayMs(start), dayMs(monday));

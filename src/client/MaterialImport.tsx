@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import type { DetectedSignal, Health, ScanAsset } from "../shared/api.ts";
+import type { DetectedSignal, Health, ScanAsset, ScanSource } from "../shared/api.ts";
 import { DEMO_CASES } from "../shared/demo.ts";
 import type { Market } from "../shared/knowledge.ts";
 import { imageToDataUrl, scan } from "./api.ts";
+import { knownScanSource } from "./origin.ts";
 import { Icon } from "./Icon.tsx";
 import { Dialog, MarketSelect } from "./ui.tsx";
 
 export interface UploadedMaterial {
 	title: string;
+	market: Market;
 	assets: ScanAsset[];
 	signals: DetectedSignal[];
+	source: ScanSource;
+	model?: string;
+	fallbackModel?: boolean;
 }
 
 interface ImportProps {
@@ -54,7 +59,18 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 			const response = await scan({ markets: [target], assets }, controller.signal);
 			if (!controller.signal.aborted) {
 				const title = file?.name ?? savedImage?.label ?? (copy.trim().split(/\r?\n/)[0]?.slice(0, 32) || "落地页素材");
-				onResult({ title, assets, signals: response.signals }, target);
+				onResult(
+					{
+						title,
+						market: target,
+						assets,
+						signals: response.signals,
+						source: knownScanSource(response.source),
+						...(response.model ? { model: response.model } : {}),
+						...(response.fallbackModel ? { fallbackModel: true } : {}),
+					},
+					target,
+				);
 			}
 		} catch (e) {
 			if (!controller.signal.aborted) setError(e instanceof Error ? e.message : "预检失败，请重试。");
@@ -81,7 +97,15 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 							<legend>选择示例素材</legend>
 							{DEMO_CASES.map((d) => (
 								<label key={d.id}>
-									<input type="radio" name="example" checked={d.id === example} onChange={() => setExample(d.id)} />
+									<input
+										type="radio"
+										name="example"
+										checked={d.id === example}
+										onChange={() => {
+											setExample(d.id);
+											setTarget(d.focus);
+										}}
+									/>
 									<span>{d.title}</span>
 								</label>
 							))}
@@ -149,7 +173,7 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 				</fieldset>
 				{error && (
 					<p role="alert" className="error-text">
-						{error}
+						检测失败，没有实时分析结果。{error}
 					</p>
 				)}
 				<div className="dialog-actions">

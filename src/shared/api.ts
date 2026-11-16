@@ -9,8 +9,10 @@ export interface DetectedSignal {
 	signal: SignalId;
 	/** The asset it was found in (an ID from the scan request). */
 	asset: string;
-	/** What the model saw or quoted, in a few words. */
+	/** What the model saw, in a few words. This may be a paraphrase and is not assumed to be a substring. */
 	evidence: string;
+	/** Exact substrings copied from the asset. The UI highlights these and does not invent a match from evidence. */
+	quotes?: string[];
 	box?: Box;
 	confidence: number;
 }
@@ -33,16 +35,25 @@ export interface ScanRequest {
 	assets?: ScanAsset[];
 }
 
+/**
+ * fixture: preset demo signals while live perception is configured; the model was not called.
+ * model: a perception model analyzed this material.
+ * offline: preset signals from the offline/mock demo, not a live analysis.
+ * fallback: a non-live substitute after live analysis failed. Never a successful model read.
+ */
+export type ScanSource = "fixture" | "model" | "offline" | "fallback";
+
 export interface ScanResponse {
 	signals: DetectedSignal[];
-	/** "fixture" when the answer came from a demo case, "model" when the perception model looked. */
-	source: "fixture" | "model";
+	source: ScanSource;
 	model?: string;
+	/** True when a model other than the configured primary model produced a real analysis. */
+	fallbackModel?: boolean;
 }
 
 export interface Health {
 	name: string;
-	/** "live" when a perception model is configured, "offline" for the fixture-only demo. */
+	/** Service availability only. "live" means a model can be called; it is not the source of any one result. */
 	scan: "live" | "offline";
 	model?: string;
 	budget?: { todayUsd: number; dailyCapUsd: number };

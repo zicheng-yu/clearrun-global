@@ -1,6 +1,7 @@
 /** D1 storage. For now only the model-spend ledger, checked before every model call. */
+import { LLM_SPEND_SCHEMA } from "../shared/ledger.ts";
 
-const SCHEMA = [`CREATE TABLE IF NOT EXISTS llm_spend (day TEXT PRIMARY KEY, cost_usd REAL NOT NULL DEFAULT 0, calls INTEGER NOT NULL DEFAULT 0, tokens INTEGER NOT NULL DEFAULT 0)`];
+const SCHEMA = [LLM_SPEND_SCHEMA];
 
 let ready: Promise<void> | undefined;
 
