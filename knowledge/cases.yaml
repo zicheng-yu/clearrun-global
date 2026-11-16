@@ -1,0 +1,219 @@
+# 出海宣发案例库（种子）
+# verified: true  = 本次已对照原始报道/官方页面核实（2026-11-11）
+# verified: false = 依据常识整理，写进 Demo 前需补出处
+# stage: creative（素材）| claims（宣称/文案）| trust（数据与信任）| timing（档期）
+
+cases:
+  # ───────────── 韩国 KR ─────────────
+  - id: kr-apple-iphone-air-pinch
+    market: KR
+    stage: creative
+    date: 2025-09
+    brand: Apple
+    title: iPhone Air 韩国版广告删掉了"捏手势"
+    summary: >
+      iPhone Air 全球广告用拇指和食指捏住机身来展示"薄"，只有韩国版把手指去掉。
+      韩国媒体普遍认为这是为了提前规避"집게손（捏手手势）厌男"争议。
+    lesson: 同一套 KV，在韩国要单独出一版；大公司会主动做"预防性本地化"。
+    sources:
+      - https://www.chosun.com/economy/tech_it/2025/09/12/G6UHMVLDRREBPFMTCONW5LBARA/
+      - https://news.nate.com/view/20250911n28219
+      - https://www.insight.co.kr/news/519817
+    verified: true
+
+  - id: kr-gs25-pinch-2021
+    market: KR
+    stage: creative
+    date: 2021-05-01
+    brand: GS25
+    title: GS25 露营促销海报"捏香肠的手"引发抵制
+    summary: >
+      海报里捏着香肠的手被指像已关闭的激进女权网站 Megalia 的 logo。
+      GS25 当天道歉、两次改图后撤下海报，后来处分了设计师，GS Retail 社长被降职。
+      这是"捏手势"争议在韩国大范围扩散的起点。
+    lesson: 在韩国，"手指捏/指向物品"的画面会被逐帧放大审视。
+    sources:
+      - https://ko.wikipedia.org/wiki/집게손가락_음모론
+    verified: true
+
+  - id: kr-nexon-maplestory-2023
+    market: KR
+    stage: creative
+    date: 2023-11-25
+    brand: Nexon（外包 Studio Ppuri）
+    title: 冒险岛宣传动画中 0.1 秒的手势引发风波
+    summary: >
+      网友指控宣传动画里有一帧"捏手势"，Nexon 要求外包工作室道歉。
+      媒体后来调查发现，那一帧是一位 40 多岁男性动画师画的，指控缺乏依据；
+      但 2024 年 8 月警方驳回工作室起诉时，仍称"商业广告回避捏手势是惯例"。
+    lesson: >
+      争议本身是否成立是另一回事，商业上的风险是真实的。
+      知识库要中立描述，不替任何一方下结论，只提示"这会引发争议"。
+    sources:
+      - https://ko.wikipedia.org/wiki/집게손가락_음모론
+      - https://ko.wikipedia.org/wiki/스튜디오_뿌리
+    verified: true
+
+  - id: kr-halloween-itaewon
+    market: KR
+    stage: timing
+    date: 2022-10-29（此后每年 10 月）
+    brand: 韩国零售与咖啡连锁业
+    title: 梨泰院事故后，韩国零售业连续 4 年不做万圣节营销
+    summary: >
+      2022 年 10 月 29 日首尔梨泰院踩踏事故后，零售和咖啡连锁品牌普遍停掉万圣节限定菜单和促销，
+      到 2026 年已是第 4 年，营销力量转向 11 月的 Pepero Day 和高考季。
+    lesson: 10 月底在韩国做"万圣节狂欢"主题，属于高风险档期。
+    sources:
+      - https://news.tf.co.kr/read/economy/2382191.htm
+      - https://www.newsworker.co.kr/news/articleView.html?idxno=511047
+    verified: true
+
+  - id: kr-lee-luda-2021
+    market: KR
+    stage: trust
+    date: 2020-12-23 ~ 2021-01-11
+    brand: Scatter Lab（AI 聊天机器人"이루다"）
+    title: AI 聊天机器人上线 3 周即下线
+    summary: >
+      以"20 多岁女大学生"为人设的聊天机器人，因歧视性言论和训练数据中的个人信息问题，
+      上线约 3 周后停止服务，之后被韩国个人信息保护委员会处以合计约 1 亿韩元的罚款。
+    lesson: AI 产品在韩国上线，人设、训练数据来源和隐私说明都会被严格审视。
+    sources:
+      - https://ko.wikipedia.org/wiki/이루다_(인공지능)
+      - https://www.aitimes.kr/news/articleView.html?idxno=20883
+    verified: true
+
+  - id: kr-deepseek-pipc-2025
+    market: KR
+    stage: trust
+    date: 2025-02
+    brand: DeepSeek
+    title: 韩国暂停 DeepSeek 新下载
+    summary: >
+      韩国个人信息保护委员会（PIPC）发现 DeepSeek 把用户数据传给字节跳动，2025 年 2 月暂停其在韩新下载；
+      4 月又公布其未经同意向中国传输了 100 多万名韩国用户的信息。
+    lesson: >
+      中国 AI 产品进韩国，"数据存在哪、传给谁"是第一道关。
+      上线物料里要主动说明数据驻留、隐私政策（韩文）和本地代表。
+    sources:
+      - https://www.reuters.com/technology/south-koreas-data-protection-authority-suspends-local-service-deepseek-2025-02-17/
+      - https://en.wikipedia.org/wiki/DeepSeek_(AI)
+    verified: true
+
+  - id: kr-ai-basic-act
+    market: KR
+    stage: trust
+    date: 2024-12 通过
+    brand: （法规）
+    title: 韩国《人工智能基本法》
+    summary: >
+      2024 年 12 月通过，要求开发和部署生成式 AI 的企业承担安全和透明义务（含风险评估、生成内容标识等）。
+    lesson: 面向韩国的 AI 产品宣发，要说明 AI 生成内容如何标识。
+    sources:
+      - https://en.wikipedia.org/wiki/Regulation_of_artificial_intelligence
+    verified: partial   # 施行日期和具体条款要以法条原文为准
+
+  # ───────────── 美国 US ─────────────
+  - id: us-apple-crush-2024
+    market: US
+    stage: creative
+    date: 2024-05
+    brand: Apple
+    title: iPad Pro "Crush!" 广告道歉
+    summary: >
+      液压机把乐器、颜料、书本压扁，最后"压"成一台 iPad。广告被批评为"碾碎人类创造力"，
+      Apple 公开道歉，并取消了电视投放计划。三星随后推出反讽广告 "UnCrush"。
+    lesson: 科技/AI 产品在美国宣传时，"取代人类创作"的意象非常容易翻车。
+    sources:
+      - https://www.macworld.com/article/2328732/apple-apologizes-for-ipad-pro-crush-ad-and-scraps-tv-plans.html
+      - https://adage.com/article/digital-marketing-ad-tech-news/apple-apologizes-ipad-pro-crushed-ad-it-missed-mark/2559321/
+    verified: true
+
+  - id: us-gemini-dear-sydney-2024
+    market: US
+    stage: creative
+    date: 2024-07/08
+    brand: Google Gemini
+    title: '"Dear Sydney" 奥运广告被撤'
+    summary: >
+      父亲让 Gemini 替女儿给偶像运动员写信。广告被批评"用 AI 取代真实的人类表达"，
+      Google 在奥运期间撤下了这支广告。
+    lesson: 别让 AI 替用户做"本该亲自做的情感表达"。
+    sources:
+      - https://en.wikipedia.org/wiki/Google_Gemini
+      - https://awfulannouncing.com/advertising/google-dear-sydney-ad-olympics-nbc-gemini-ai.html
+    verified: true
+
+  - id: us-artisan-stop-hiring-humans
+    market: US
+    stage: claims
+    date: 2024-2026
+    brand: Artisan（AI 销售 agent 初创公司）
+    title: '"Stop Hiring Humans" 广告牌引发反弹后退役'
+    summary: >
+      旧金山、纽约时代广场等地的挑衅式广告牌带来大量曝光，同时引发强烈反弹，
+      公司之后宣布不再使用这条口号。
+    lesson: >
+      "取代人类员工"的叙事能换来流量，但品牌代价很高。
+      对中国 AI 公司来说，再叠加"外国公司抢美国人饭碗"的联想，风险更大。
+    sources:
+      - https://www.artisan.co/blog/stop-hiring-humans
+      - https://www.sfchronicle.com/bayarea/article/artisan-stop-hiring-humans-billboards-22426145.php
+    verified: true
+
+  - id: us-ftc-ai-comply-2024
+    market: US
+    stage: claims
+    date: 2024-09-25
+    brand: DoNotPay 等
+    title: FTC "Operation AI Comply" 打击夸大 AI 宣称
+    summary: >
+      FTC 集中处理一批夸大 AI 能力的案件，其中 DoNotPay 自称"世界第一个机器人律师"，
+      2025 年 2 月和解令生效，禁止其做无依据的 AI 能力宣传。
+    lesson: '"100% 准确""替代律师/医生"这类宣称，在美国需要证据支撑。'
+    sources:
+      - https://www.ftc.gov/news-events/news/press-releases/2024/09/ftc-announces-crackdown-deceptive-ai-claims-schemes
+    verified: true
+
+  - id: us-ftc-fake-reviews-2024
+    market: US
+    stage: claims
+    date: 2024-08
+    brand: （法规）
+    title: FTC 禁止 AI 生成的虚假评价
+    summary: FTC 规则禁止营销方使用由生成式 AI 编造的用户评价或推荐语。
+    lesson: 落地页和应用商店素材里不要放 AI 编写的"用户好评"。
+    sources:
+      - https://en.wikipedia.org/wiki/ChatGPT
+    verified: partial   # 需要补 FTC 规则原文链接
+
+  # ───────────── 新加坡 SG ─────────────
+  - id: sg-epay-brownface-2019
+    market: SG
+    stage: creative
+    date: 2019-07/08
+    brand: NETS E-Pay（演员 Dennis Chew）
+    title: 电子支付广告"棕脸"风波
+    summary: >
+      华人演员 Dennis Chew 在同一支广告里化妆扮演马来人、印度人等多个族群角色，被批评为"brownface"。
+      演员和相关方公开道歉。
+    lesson: 新加坡是多元种族社会，选角和妆造必须真实代表各族群，不能"一人扮多族"。
+    sources:
+      - https://www.straitstimes.com/singapore/actor-and-dj-dennis-chew-apologises-for-e-pay-brownface-advertisement
+      - https://www.channelnewsasia.com/singapore/brownface-controversy-actor-dennis-chew-says-hes-deeply-sorry-role-in-e-payment-ad-5701776
+    verified: true
+
+  - id: sg-hungry-ghost-launch-lull
+    market: SG
+    stage: timing
+    date: 每年农历七月（约公历 8 月）
+    brand: 新加坡房地产开发商
+    title: 鬼月期间开发商刻意避开新盘发布
+    summary: >
+      农历七月被部分华人视为不宜做大决定的月份，开发商普遍推迟新盘发布，当月新房销量明显下滑。
+    lesson: 面向华人消费者的重大发布要避开鬼月；B2B 和面向年轻群体的产品影响较小。
+    sources:
+      - https://sg.propnex.com/news-details/13301/developers-sales-fell-in-august-amid-muted-launch-activity-during-hungry-ghost-month
+      - https://www.99.co/singapore/insider/august-developer-sales-slow-amid-launch-lull-and-hungry-ghost-month/
+    verified: true

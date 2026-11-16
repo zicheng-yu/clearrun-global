@@ -10,5 +10,5 @@ dist/
 *.log
 .DS_Store
 
-# Never commit Qloo response data
-.qloo-cache/
+# Local scratch
+.scratch/

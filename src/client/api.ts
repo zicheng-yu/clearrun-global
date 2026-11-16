@@ -1,24 +1,9 @@
 import { useEffect, useState } from "react";
-import type { Comparison } from "../engine/explain/compare.ts";
-import type { AudienceProfile } from "../engine/explain/demographics.ts";
-import type {
-	AgentStepResponse,
-	BaselineResult,
-	Comp,
-	PlanProgress,
-	PlanRequest,
-	PlanResponse,
-	PlanResult,
-	ShareMeta,
-	SharedPlan,
-	WatchEvent,
-	WatchView,
-} from "../shared/types.ts";
+import type { ScanAsset, ScanRequest, ScanResponse } from "../shared/api.ts";
 
 async function errorMessage(response: Response): Promise<string> {
 	const body = (await response.json().catch(() => ({}))) as { message?: string };
-	if (response.status === 503 && !body.message) return "The release calendar is still being built. Check back in a few minutes.";
-	return body.message ?? `Request failed (HTTP ${response.status})`;
+	return body.message ?? `请求失败（HTTP ${response.status}）`;
 }
 
 export function useJson<T>(url: string): { data?: T; error?: string } {
@@ -36,94 +21,36 @@ export function useJson<T>(url: string): { data?: T; error?: string } {
 	return state;
 }
 
-/** Runs a plan to completion. Each request scores up to two batches; cached audiences finish in one. */
-export async function runPlan(request: PlanRequest, onProgress: (progress: PlanProgress) => void, signal?: AbortSignal): Promise<PlanResult> {
-	let calls = 0;
-	for (let step = 0; step < 10; step++) {
-		const response = await fetch("/api/plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal });
-		if (!response.ok) throw new Error(await errorMessage(response));
-		const body = (await response.json()) as PlanResponse;
-		calls += body.qlooCalls;
-		if (body.status === "ready") return { ...body, qlooCalls: calls };
-		onProgress({ ...body, qlooCalls: calls });
+export async function scan(request: ScanRequest, signal?: AbortSignal): Promise<ScanResponse> {
+	const response = await fetch("/api/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal });
+	if (!response.ok) throw new Error(await errorMessage(response));
+	return (await response.json()) as ScanResponse;
+}
+
+/**
+ * Loads an image (a File or a URL, SVG included) and re-encodes it as a JPEG data: URL no larger than
+ * `maxSide` pixels on its long edge: what the perception model accepts, at a size that keeps requests small.
+ */
+export async function imageToDataUrl(source: File | string, maxSide = 1400): Promise<string> {
+	const url = typeof source === "string" ? source : URL.createObjectURL(source);
+	try {
+		const img = new Image();
+		img.decoding = "async";
+		img.src = url;
+		await img.decode();
+		const scale = Math.min(1, maxSide / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+		const canvas = document.createElement("canvas");
+		canvas.width = Math.max(1, Math.round((img.naturalWidth || maxSide) * scale));
+		canvas.height = Math.max(1, Math.round((img.naturalHeight || maxSide) * scale));
+		const ctx = canvas.getContext("2d");
+		if (!ctx) throw new Error("浏览器不支持 canvas");
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+		return canvas.toDataURL("image/jpeg", 0.88);
+	} finally {
+		if (typeof source !== "string") URL.revokeObjectURL(url);
 	}
-	throw new Error("Scoring is taking longer than expected. Try again in a minute.");
 }
 
-export async function searchFilms(query: string, signal?: AbortSignal): Promise<Comp[]> {
-	const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return ((await response.json()) as { results: Comp[] }).results;
-}
-
-/** Taste tags the comps share with a rival (or a game's proxy). */
-export async function fetchExplain(comps: string[], rival: string, signal?: AbortSignal): Promise<Comparison> {
-	const response = await fetch(`/api/explain?comps=${encodeURIComponent(comps.join(","))}&rival=${encodeURIComponent(rival)}`, { signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as Comparison;
-}
-
-export async function fetchAudience(comps: string[], signal?: AbortSignal): Promise<AudienceProfile | null> {
-	const response = await fetch(`/api/audience?comps=${encodeURIComponent(comps.join(","))}`, { signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return ((await response.json()) as { profile: AudienceProfile | null }).profile;
-}
-
-export async function agentStep(body: { question: string } | { runId: string; after: number }, signal?: AbortSignal): Promise<AgentStepResponse> {
-	const response = await fetch("/api/agent/step", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as AgentStepResponse;
-}
-
-export async function fetchAgentRun(id: string, signal?: AbortSignal): Promise<AgentStepResponse> {
-	const response = await fetch(`/api/agent/run?id=${encodeURIComponent(id)}`, { signal });
-	if (!response.ok) throw new Error(response.status === 404 ? "That agent run has expired." : await errorMessage(response));
-	return (await response.json()) as AgentStepResponse;
-}
-
-export async function fetchBaseline(runId: string, signal?: AbortSignal): Promise<BaselineResult> {
-	const response = await fetch("/api/agent/baseline", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId }), signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as BaselineResult;
-}
-
-export async function fetchWatch(id: string, signal?: AbortSignal): Promise<WatchView | undefined> {
-	const response = await fetch(`/api/watch?id=${encodeURIComponent(id)}`, { signal });
-	if (response.status === 404) return undefined;
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as WatchView;
-}
-
-export async function startWatch(input: { comps: Comp[]; you?: string; from: string; week: string; label?: string }): Promise<WatchView> {
-	const response = await fetch("/api/watch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as WatchView;
-}
-
-/** `to` is the rival's new opening day, or null to take it off the calendar. */
-export async function simulateWatch(input: { id: string; rival: string; to: string | null }): Promise<WatchEvent> {
-	const response = await fetch("/api/watch/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as WatchEvent;
-}
-
-/** A share link's preview for the page's query, e.g. {scenario: "dunesday"}: the link, title, description and card image. */
-export async function fetchShareMeta(params: Record<string, string>, signal?: AbortSignal): Promise<ShareMeta> {
-	const response = await fetch(`/api/card?${new URLSearchParams(params)}`, { signal });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as ShareMeta;
-}
-
-/** Saves a custom plan as a share link (?plan=); the same plan always gets the same link. */
-export async function createShare(input: { comps: string[]; you?: string; from: string }): Promise<ShareMeta & { id: string }> {
-	const response = await fetch("/api/share", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as ShareMeta & { id: string };
-}
-
-export async function fetchSharedPlan(id: string, signal?: AbortSignal): Promise<SharedPlan | undefined> {
-	const response = await fetch(`/api/share?id=${encodeURIComponent(id)}`, { signal });
-	if (response.status === 404) return undefined;
-	if (!response.ok) throw new Error(await errorMessage(response));
-	return (await response.json()) as SharedPlan;
-}
+export type { ScanAsset };

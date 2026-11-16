@@ -1,12 +1,14 @@
 {
-	"name": "clearrun",
+	"name": "clearrun-global",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "cf dev",
 		"dev:mock": "cf dev --mode mock",
-		"build": "cf build",
+		"build": "npm run knowledge:check && cf build",
 		"deploy": "cf deploy",
+		"knowledge": "node scripts/build-knowledge.ts",
+		"knowledge:check": "node scripts/build-knowledge.ts --check",
 		"typecheck": "cf workers types && tsc -p tsconfig.worker.json && tsc -p tsconfig.app.json && tsc -p tsconfig.node.json",
 		"test": "vitest run"
 	},
@@ -18,14 +20,13 @@
 		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^6.1.2",
 		"cf": "^1.0.0-beta.19",
-		"subset-font": "^2.9.0",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^7.0.2",
 		"vite": "^8.3.0",
-		"vitest": "^5.0.5"
+		"vitest": "^5.0.5",
+		"yaml": "^2.9.1"
 	},
 	"dependencies": {
-		"@resvg/resvg-wasm": "^2.6.2",
 		"hono": "^4.13.13",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1"

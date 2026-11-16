@@ -1,0 +1,235 @@
+# 出海宣发规则库（种子）
+# 架构约定：模型只负责"看到了什么"（输出 signals，词表见 src/shared/signals.ts），
+#           "有没有问题"由这里的规则判定 —— 模型不能自己下结论。
+#
+# severity: high（大概率翻车）| medium（需要评估）| low（注意即可）
+# detect:   用什么方式检测 —— vision（看图）| text（看文案）| date（看日期）| page（看落地页/隐私页）
+# looks_for: 给人看的检测说明
+# signals:  命中哪些信号就触发这条规则（任一即可）
+# stage: timing 的规则不在素材预检里直接报错，而是交给档期引擎：素材带着这些信号时，相关档期被拦截
+# cases:    关联 cases.yaml 的 id；verified 同 cases.yaml
+
+rules:
+  # ───────────── 韩国 KR ─────────────
+  - id: KR-G01
+    market: KR
+    stage: creative
+    category: 手势
+    severity: high
+    detect: vision
+    looks_for: 拇指和食指做"捏/夹"的手势，尤其是捏着或指向产品、物品
+    signals: [gesture.pinch]
+    why: 自 2021 年起被部分网络社区视为"厌男"符号，多家企业因此道歉撤稿；争议本身是否成立另当别论，但商业广告回避该手势已成惯例
+    fix: 改成手掌托举、平放在桌面，或只展示产品本身（Apple iPhone Air 韩国版就是这样处理的）
+    cases: [kr-apple-iphone-air-pinch, kr-gs25-pinch-2021, kr-nexon-maplestory-2023]
+    verified: true
+
+  - id: KR-T01
+    market: KR
+    stage: timing
+    category: 敏感档期
+    severity: high
+    detect: date
+    looks_for: 10 月下旬至 10-31，"万圣节/狂欢/派对"主题的活动或素材
+    signals: [theme.halloween, theme.festive]
+    why: 2022-10-29 梨泰院事故后，韩国零售业已连续 4 年停止万圣节营销
+    fix: 避开万圣节主题；把档期移到 11 月（Pepero Day、高考结束后）
+    cases: [kr-halloween-itaewon]
+    verified: true
+
+  - id: KR-T02
+    market: KR
+    stage: timing
+    category: 全民事件
+    severity: medium
+    detect: date
+    looks_for: 高考日（每年 11 月第三个星期四）当天发布，或做喧闹的线下活动
+    signals: [theme.festive]
+    why: 全国考生、家长高度关注；当天的营销音量和噪音都会被视为不合时宜
+    fix: 避开当天；针对学生的产品可以在考后做"考完了"主题
+    cases: []
+    verified: partial   # 日期规则已核实（KICE 每年 11 月第三个星期四）；营销惯例待补出处
+
+  - id: KR-T03
+    market: KR
+    stage: timing
+    category: 纪念日
+    severity: medium
+    detect: date
+    looks_for: 4-16（世越号）、6-6（显忠日）前后的轻浮、狂欢基调素材
+    signals: [theme.festive]
+    why: 全国性哀悼和纪念日，娱乐化基调容易被批评
+    fix: 这些日期前后的素材改用克制基调，或顺延发布
+    cases: []
+    verified: false
+
+  - id: KR-C01
+    market: KR
+    stage: creative
+    category: 历史与领土
+    severity: high
+    detect: vision
+    looks_for: 旭日旗及类似放射状图案；地图上独岛/东海的标注；日本殖民时期相关意象
+    signals: [symbol.rising_sun, map.disputed_label]
+    why: 涉及韩日历史问题，属于韩国社会的红线
+    fix: 去掉放射状日章图案；地图用"독도/동해"标注，或干脆不放地图
+    cases: []
+    verified: false
+
+  - id: KR-C02
+    market: KR
+    stage: creative
+    category: 颜色与书写
+    severity: low
+    detect: vision
+    looks_for: 用红色写活人的名字（例如在海报上用红字写代言人名字）
+    signals: [text.red_person_name]
+    why: 传统上红笔写名字与死亡相关
+    fix: 人名改用其他颜色
+    cases: []
+    verified: false
+
+  - id: KR-D01
+    market: KR
+    stage: trust
+    category: 数据与隐私
+    severity: high
+    detect: page
+    looks_for: 落地页或隐私政策没有韩文版，没写明数据存储地、跨境传输对象、本地代表
+    signals: [privacy.no_local_policy, privacy.no_data_residency]
+    why: 韩国 PIPC 曾因数据传往中国暂停 DeepSeek 新下载；AI 聊天机器人 이루다 也因隐私问题被罚
+    fix: 提供韩文隐私政策，写明数据驻留地区、第三方共享清单和韩国本地联系人；在宣发物料里主动说明
+    cases: [kr-deepseek-pipc-2025, kr-lee-luda-2021]
+    verified: true
+
+  - id: KR-D02
+    market: KR
+    stage: trust
+    category: AI 透明度
+    severity: medium
+    detect: page
+    looks_for: 生成式 AI 产品没有说明如何标识 AI 生成内容
+    signals: [ai.no_disclosure]
+    why: 韩国《人工智能基本法》对生成式 AI 有透明度义务
+    fix: 在产品说明和宣发页写明 AI 生成内容的标识方式
+    cases: [kr-ai-basic-act]
+    verified: partial
+
+  # ───────────── 美国 US ─────────────
+  - id: US-M01
+    market: US
+    stage: claims
+    category: AI 叙事
+    severity: high
+    detect: text
+    looks_for: '"取代人类""不用再雇人""碾碎/淘汰创作者"等意象或口号'
+    signals: [claim.replace_humans, claim.crush_creativity]
+    why: Apple Crush、Gemini "Dear Sydney"、Artisan "Stop Hiring Humans" 都因此遭遇强烈反弹
+    fix: 改成"增强/赋能"叙事，例如"把时间还给你的团队"；把人放在画面中心
+    cases: [us-apple-crush-2024, us-gemini-dear-sydney-2024, us-artisan-stop-hiring-humans]
+    verified: true
+
+  - id: US-M02
+    market: US
+    stage: claims
+    category: 情感替代
+    severity: medium
+    detect: text
+    looks_for: AI 代替用户完成亲密或情感表达（替孩子写信、替你道歉、替你写婚礼誓词）
+    signals: [claim.emotional_ghostwriting]
+    why: '"Dear Sydney" 被撤的核心原因'
+    fix: 让 AI 做辅助，比如提供灵感、检查语法，而不是代笔情感内容
+    cases: [us-gemini-dear-sydney-2024]
+    verified: true
+
+  - id: US-L01
+    market: US
+    stage: claims
+    category: 能力宣称
+    severity: high
+    detect: text
+    looks_for: '"100% 准确""从不出错""替代律师/医生/会计"等没有证据的 AI 能力宣称'
+    signals: [claim.absolute_accuracy, claim.replace_professional]
+    why: FTC "Operation AI Comply" 专门打击这类宣称，DoNotPay 已被处罚
+    fix: 用可验证的数据替代绝对化表述，并注明测试条件
+    cases: [us-ftc-ai-comply-2024]
+    verified: true
+
+  - id: US-L02
+    market: US
+    stage: claims
+    category: 虚假评价
+    severity: high
+    detect: page
+    looks_for: AI 生成的用户好评、虚构的推荐人或 logo 墙
+    signals: [claim.ai_testimonial]
+    why: FTC 规则明确禁止
+    fix: 只使用真实用户评价，并保留授权记录
+    cases: [us-ftc-fake-reviews-2024]
+    verified: partial
+
+  - id: US-T01
+    market: US
+    stage: timing
+    category: 纪念日
+    severity: medium
+    detect: date
+    looks_for: 9-11 当天发布，或做促销、轻松基调的营销
+    signals: [theme.festive]
+    why: 全国纪念日，蹭热度或促销会被视为不敬
+    fix: 当天暂停营销推送
+    cases: []
+    verified: false
+
+  # ───────────── 新加坡 SG ─────────────
+  - id: SG-R01
+    market: SG
+    stage: creative
+    category: 种族表现
+    severity: high
+    detect: vision
+    looks_for: 一人化妆扮演多个族群；刻意加深或改变肤色；族群刻板印象（口音、服饰）
+    signals: [people.one_actor_many_races, people.altered_skin_tone]
+    why: NETS E-Pay "brownface" 广告引发全国性批评并道歉
+    fix: 由对应族群的演员出演；多族群画面要真实、平衡
+    cases: [sg-epay-brownface-2019]
+    verified: true
+
+  - id: SG-R02
+    market: SG
+    stage: creative
+    category: 宗教与饮食
+    severity: medium
+    detect: vision
+    looks_for: 面向全体或马来穆斯林受众的素材里出现猪肉、酒精；宗教符号用作装饰
+    signals: [food.pork, food.alcohol, religion.decorative_symbol]
+    why: 新加坡多宗教共处，宗教和谐受法律保护（Maintenance of Religious Harmony Act）
+    fix: 面向全体受众的素材避免猪肉和酒精元素；宗教元素只在节庆祝福等恰当语境出现
+    cases: []
+    verified: false
+
+  - id: SG-T01
+    market: SG
+    stage: timing
+    category: 华人习俗
+    severity: medium
+    detect: date
+    looks_for: 农历七月（鬼月，约公历 8 月）做面向华人消费者的重大发布
+    signals: []
+    why: 开发商普遍避开鬼月发布新盘，当月销量明显下滑
+    fix: 消费类发布移到鬼月前后；B2B 产品影响较小
+    cases: [sg-hungry-ghost-launch-lull]
+    verified: true
+
+  - id: SG-C01
+    market: SG
+    stage: creative
+    category: 国家象征
+    severity: medium
+    detect: vision
+    looks_for: 商业广告里使用新加坡国旗、国徽、国歌
+    signals: [symbol.national_flag]
+    why: 新加坡对国家象征的商业使用有法规限制
+    fix: 国庆主题用红白配色和城市地标，不直接使用国旗国徽
+    cases: []
+    verified: false

@@ -52,7 +52,14 @@ export interface AssistantMessage {
 	reasoning_details?: unknown[];
 }
 
-export type ChatMessage = { role: "system"; content: string } | { role: "user"; content: string } | AssistantMessage | { role: "tool"; tool_call_id: string; content: string };
+/** OpenAI-style content parts, so a user turn can carry images (data: URLs) next to text. */
+export type ContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
+
+export type ChatMessage =
+	| { role: "system"; content: string }
+	| { role: "user"; content: string | ContentPart[] }
+	| AssistantMessage
+	| { role: "tool"; tool_call_id: string; content: string };
 
 export interface ChatResult {
 	message: AssistantMessage;
@@ -73,7 +80,7 @@ export async function chat(
 		headers: {
 			Authorization: `Bearer ${config.apiKey}`,
 			"Content-Type": "application/json",
-			...(config.appUrl ? { "HTTP-Referer": config.appUrl, "X-Title": "Clear Run" } : {}),
+			...(config.appUrl ? { "HTTP-Referer": config.appUrl, "X-Title": "ClearRun Global" } : {}),
 		},
 		body: JSON.stringify({
 			model: config.model,

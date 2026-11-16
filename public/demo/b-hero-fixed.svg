@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="Georgia, 'Songti SC', serif">
+  <rect width="1200" height="800" fill="#faf9f5"/>
+  <rect width="1200" height="72" fill="#f1ebe1"/>
+  <circle cx="70" cy="36" r="14" fill="#bc6a3a"/>
+  <text x="96" y="45" font-size="26" fill="#1c1815">Mira</text>
+  <text x="760" y="44" font-size="20" fill="#5b5148">Product    Pricing    Customers</text>
+  <rect x="1060" y="18" width="110" height="38" rx="19" fill="#bc6a3a"/>
+  <text x="1082" y="44" font-size="19" fill="#fffaf2">Start free</text>
+  <text x="96" y="262" font-size="66" fill="#1c1815">Give your team back</text>
+  <text x="96" y="330" font-size="66" fill="#bc6a3a">10 hours a week.</text>
+  <text x="96" y="398" font-size="30" fill="#5b5148">92% task success on our public benchmark · see the methodology →</text>
+  <g font-size="19" fill="#2b2621">
+    <rect x="96" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="120" y="568">“Mira drafts the follow-ups</text>
+    <text x="120" y="596">so I can focus on the client.”</text>
+    <text x="120" y="650" fill="#8a7f73">— verified customer</text>
+    <rect x="440" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="464" y="568">“Our team handles twice</text>
+    <text x="464" y="596">the requests, with less stress.”</text>
+    <text x="464" y="650" fill="#8a7f73">— verified customer</text>
+    <rect x="784" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="808" y="568">“A second pair of hands,</text>
+    <text x="808" y="596">not a replacement.”</text>
+    <text x="808" y="650" fill="#8a7f73">— verified customer</text>
+  </g>
+  <rect x="930" y="96" width="240" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
+  <text x="950" y="123" font-size="20" fill="#8a7f73">示意图 · 落地页改稿</text>
+</svg>

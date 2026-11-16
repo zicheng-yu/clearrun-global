@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="Georgia, 'Songti SC', serif">
+  <rect width="1200" height="800" fill="#faf9f5"/>
+  <rect width="1200" height="72" fill="#f1ebe1"/>
+  <circle cx="70" cy="36" r="14" fill="#bc6a3a"/>
+  <text x="96" y="45" font-size="26" fill="#1c1815">Mira</text>
+  <text x="760" y="44" font-size="20" fill="#5b5148">Product    Pricing    Customers</text>
+  <rect x="1060" y="18" width="110" height="38" rx="19" fill="#bc6a3a"/>
+  <text x="1082" y="44" font-size="19" fill="#fffaf2">Start free</text>
+  <text x="96" y="262" font-size="66" fill="#1c1815">Fire your assistant.</text>
+  <text x="96" y="330" font-size="66" fill="#bc6a3a">Hire Mira.</text>
+  <text x="96" y="398" font-size="34" fill="#5b5148">100% accurate. Never hallucinates.</text>
+  <g font-size="19" fill="#2b2621">
+    <rect x="96" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="120" y="568">“Mira wrote my wedding vows</text>
+    <text x="120" y="596">in 30 seconds.”</text>
+    <text x="120" y="650" fill="#8a7f73">— Jamie R., Austin</text>
+    <rect x="440" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="464" y="568">“We cut our support team</text>
+    <text x="464" y="596">in half.”</text>
+    <text x="464" y="650" fill="#8a7f73">— Priya S., COO</text>
+    <rect x="784" y="520" width="320" height="170" rx="12" fill="#fffdf9" stroke="#ddd5ca"/>
+    <text x="808" y="568">“It never makes mistakes.”</text>
+    <text x="808" y="650" fill="#8a7f73">— Marcus T., Founder</text>
+  </g>
+  <rect x="900" y="96" width="270" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
+  <text x="920" y="123" font-size="20" fill="#8a7f73">示意图 · 落地页首屏初稿</text>
+</svg>

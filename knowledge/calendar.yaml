@@ -1,0 +1,63 @@
+# 出海宣发日历（2026-11 ~ 2027-10）—— Clear Run 档期引擎的输入
+# kind:
+#   holiday     法定假日/长假：受众离线或注意力被家庭活动占据
+#   rival       抢注意力的大事件：科技发布会、大型购物节、体育赛事
+#   sensitive   敏感日/敏感期：会轻度占用注意力，主要作用是"主题拦截"（见 blocks）
+#   opportunity 顺势窗口：受众匹配时加分
+# attention: 0-1，事件占用公众注意力的程度（之后可用该语言版维基 pageviews 校准，ClearRun 有现成代码）
+# audience:  对不同受众分群的影响 0-1（developer / prosumer / consumer / enterprise / student；all 是其余分群的默认值）
+# blocks:    素材里出现这些信号（src/shared/signals.ts）时，覆盖到这个事件的发布周会被拦截
+# rules:     关联 rules.yaml，解释为什么拦截
+# confidence:
+#   confirmed  法定假日（Nager.Date API，2026-11-11 拉取）或已核实的固定日期
+#   rule       按固定规则推算（如"11 月第三个星期四"）
+#   estimated  按往年惯例估计，官方尚未公布，UI 上标"预计"
+
+KR:
+  - {id: kr-csat-2026, name: 高考日, kind: sensitive, start: 2026-11-19, end: 2026-11-19, attention: 0.8, audience: {student: 1.0, consumer: 0.6, all: 0.4}, confidence: rule, note: 每年 11 月第三个星期四, rules: [KR-T02], blocks: [theme.festive]}
+  - {id: kr-xmas-2026, name: 圣诞节, kind: holiday, start: 2026-12-24, end: 2026-12-25, attention: 0.5, audience: {all: 0.5}, confidence: confirmed}
+  - {id: kr-newyear-2027, name: 元旦, kind: holiday, start: 2026-12-31, end: 2027-01-01, attention: 0.6, audience: {all: 0.6}, confidence: confirmed}
+  - {id: kr-unpacked-early-2027, name: 三星 Galaxy Unpacked, kind: rival, start: 2027-01-20, end: 2027-02-28, attention: 0.7, audience: {consumer: 0.8, prosumer: 0.8, developer: 0.5, all: 0.4}, confidence: estimated, note: S 系列发布，往年在 1-2 月，具体日期待官宣；窗口较宽所以只取中等影响}
+  - {id: kr-seollal-2027, name: 설날 春节, kind: holiday, start: 2027-02-06, end: 2027-02-09, attention: 0.95, audience: {all: 0.95}, confidence: confirmed, note: 2/7 是周日，2/9 补休}
+  - {id: kr-march1-2027, name: 三一节, kind: sensitive, start: 2027-03-01, end: 2027-03-01, attention: 0.5, audience: {all: 0.5}, confidence: confirmed, note: 当天避免日本相关意象, rules: [KR-C01], blocks: [theme.japan, symbol.rising_sun]}
+  - {id: kr-semester-2027, name: 新学期开学, kind: opportunity, start: 2027-03-02, end: 2027-03-15, attention: 0.4, audience: {student: 0.9}, confidence: rule, note: 学习类 AI 工具的窗口}
+  - {id: kr-sewol-2027, name: 世越号纪念日, kind: sensitive, start: 2027-04-16, end: 2027-04-16, attention: 0.5, audience: {all: 0.5}, confidence: rule, rules: [KR-T03], blocks: [theme.festive]}
+  - {id: kr-may-holidays-2027, name: 劳动节+儿童节, kind: holiday, start: 2027-05-01, end: 2027-05-05, attention: 0.6, audience: {all: 0.6}, confidence: confirmed, note: 5/3 补休}
+  - {id: kr-buddha-2027, name: 佛诞日, kind: holiday, start: 2027-05-13, end: 2027-05-13, attention: 0.4, audience: {all: 0.4}, confidence: confirmed}
+  - {id: kr-memorial-2027, name: 显忠日, kind: sensitive, start: 2027-06-06, end: 2027-06-06, attention: 0.5, audience: {all: 0.5}, confidence: confirmed, rules: [KR-T03], blocks: [theme.festive]}
+  - {id: kr-unpacked-summer-2027, name: 三星折叠屏 Unpacked, kind: rival, start: 2027-07-05, end: 2027-07-25, attention: 0.6, audience: {consumer: 0.7, prosumer: 0.7, all: 0.3}, confidence: estimated, note: 往年在 7 月}
+  - {id: kr-liberation-2027, name: 光复节, kind: sensitive, start: 2027-08-15, end: 2027-08-16, attention: 0.6, audience: {all: 0.6}, confidence: confirmed, note: 8/16 补休；避免日本相关意象, rules: [KR-C01], blocks: [theme.japan, symbol.rising_sun]}
+  - {id: kr-chuseok-2027, name: 추석 中秋, kind: holiday, start: 2027-09-14, end: 2027-09-16, attention: 0.95, audience: {all: 0.95}, confidence: confirmed}
+  - {id: kr-hangul-2027, name: 韩文日, kind: opportunity, start: 2027-10-09, end: 2027-10-11, attention: 0.4, audience: {all: 0.4}, confidence: confirmed, note: 10/11 补休；发布韩语能力相关功能的好时机}
+  - {id: kr-halloween-2027, name: 万圣节/梨泰院纪念, kind: sensitive, start: 2027-10-25, end: 2027-10-31, attention: 0.6, audience: {consumer: 0.8, all: 0.5}, confidence: rule, note: 10/29 梨泰院事故纪念；万圣节主题高风险, rules: [KR-T01], blocks: [theme.halloween, theme.festive]}
+
+US:
+  - {id: us-thanksgiving-2026, name: 感恩节, kind: holiday, start: 2026-11-26, end: 2026-11-26, attention: 0.85, audience: {all: 0.85}, confidence: confirmed}
+  - {id: us-bfcm-2026, name: 黑五到网一, kind: rival, start: 2026-11-27, end: 2026-11-30, attention: 0.9, audience: {consumer: 0.95, prosumer: 0.8, enterprise: 0.3, all: 0.6}, confidence: rule, note: 广告位贵、信息过载}
+  - {id: us-reinvent-2026, name: AWS re:Invent, kind: rival, start: 2026-11-30, end: 2026-12-04, attention: 0.6, audience: {developer: 0.9, enterprise: 0.9, all: 0.2}, confidence: estimated, note: 往年在 12 月第一周}
+  - {id: us-holiday-freeze-2026, name: 年底假期, kind: holiday, start: 2026-12-21, end: 2027-01-01, attention: 0.8, audience: {enterprise: 0.95, developer: 0.7, consumer: 0.6, all: 0.7}, confidence: rule, note: 企业决策基本停摆}
+  - {id: us-ces-2027, name: CES, kind: rival, start: 2027-01-05, end: 2027-01-09, attention: 0.8, audience: {consumer: 0.8, prosumer: 0.9, developer: 0.5, all: 0.4}, confidence: estimated, note: 往年在 1 月第一周}
+  - {id: us-superbowl-2027, name: 超级碗 LXI, kind: rival, start: 2027-02-14, end: 2027-02-14, attention: 0.9, audience: {consumer: 0.9, all: 0.7}, confidence: estimated, note: AI 公司近年常在此投广告}
+  - {id: us-gtc-2027, name: NVIDIA GTC, kind: rival, start: 2027-03-15, end: 2027-03-19, attention: 0.6, audience: {developer: 0.9, enterprise: 0.7, all: 0.2}, confidence: estimated, note: 往年在 3 月中}
+  - {id: us-io-build-2027, name: Google I/O + Microsoft Build, kind: rival, start: 2027-05-10, end: 2027-05-21, attention: 0.8, audience: {developer: 0.95, prosumer: 0.7, enterprise: 0.6, all: 0.3}, confidence: estimated, note: 往年在 5 月}
+  - {id: us-memorial-2027, name: 阵亡将士纪念日, kind: holiday, start: 2027-05-31, end: 2027-05-31, attention: 0.5, audience: {all: 0.5}, confidence: confirmed}
+  - {id: us-wwdc-2027, name: WWDC, kind: rival, start: 2027-06-07, end: 2027-06-11, attention: 0.85, audience: {developer: 0.95, prosumer: 0.9, consumer: 0.6, all: 0.4}, confidence: estimated, note: 往年在 6 月上旬}
+  - {id: us-july4-2027, name: 独立日, kind: holiday, start: 2027-07-02, end: 2027-07-05, attention: 0.7, audience: {all: 0.7}, confidence: confirmed, note: 7/5 补休}
+  - {id: us-backtoschool-2027, name: 返校季, kind: opportunity, start: 2027-08-09, end: 2027-09-03, attention: 0.5, audience: {student: 0.9}, confidence: rule, note: 学习类 AI 工具的窗口}
+  - {id: us-laborday-2027, name: 劳动节, kind: holiday, start: 2027-09-06, end: 2027-09-06, attention: 0.5, audience: {all: 0.5}, confidence: confirmed}
+  - {id: us-apple-sept-2027, name: Apple 秋季发布会, kind: rival, start: 2027-09-07, end: 2027-09-17, attention: 0.85, audience: {consumer: 0.9, prosumer: 0.9, developer: 0.6, all: 0.5}, confidence: estimated, note: 往年在 9 月上中旬}
+  - {id: us-911-2027, name: 9·11 纪念日, kind: sensitive, start: 2027-09-11, end: 2027-09-11, attention: 0.6, audience: {all: 0.6}, confidence: rule, rules: [US-T01], blocks: [theme.festive]}
+  - {id: us-devday-2027, name: OpenAI DevDay, kind: rival, start: 2027-10-01, end: 2027-10-15, attention: 0.7, audience: {developer: 0.95, prosumer: 0.8, enterprise: 0.6, all: 0.3}, confidence: estimated, note: 往年在 10 月上旬；AI 产品最直接的撞档对手}
+
+SG:
+  - {id: sg-sff-2026, name: 新加坡金融科技节, kind: rival, start: 2026-11-16, end: 2026-11-20, attention: 0.5, audience: {enterprise: 0.9, developer: 0.6, all: 0.2}, confidence: estimated, note: 往年在 11 月中；对 B2B AI 产品既是撞档也是机会}
+  - {id: sg-xmas-2026, name: 圣诞到元旦, kind: holiday, start: 2026-12-24, end: 2027-01-01, attention: 0.6, audience: {all: 0.6}, confidence: rule}
+  - {id: sg-cny-2027, name: 农历新年, kind: holiday, start: 2027-02-05, end: 2027-02-08, attention: 0.95, audience: {all: 0.9}, confidence: confirmed, note: 2/8 补休；前后一周注意力都在拜年和团聚}
+  - {id: sg-ramadan-2027, name: 斋月, kind: sensitive, start: 2027-02-08, end: 2027-03-09, attention: 0.4, audience: {all: 0.3}, confidence: estimated, note: 按开斋节 3/10 倒推；白天的饮食类素材要注意, rules: [SG-R02], blocks: [food.pork, food.alcohol]}
+  - {id: sg-hari-raya-puasa-2027, name: 开斋节, kind: holiday, start: 2027-03-10, end: 2027-03-10, attention: 0.6, audience: {all: 0.5}, confidence: confirmed}
+  - {id: sg-good-friday-2027, name: 耶稣受难日, kind: holiday, start: 2027-03-26, end: 2027-03-26, attention: 0.3, audience: {all: 0.3}, confidence: confirmed}
+  - {id: sg-raya-haji-vesak-2027, name: 哈芝节+卫塞节, kind: holiday, start: 2027-05-17, end: 2027-05-20, attention: 0.4, audience: {all: 0.4}, confidence: confirmed}
+  - {id: sg-atxsg-2027, name: Asia Tech x Singapore, kind: rival, start: 2027-05-25, end: 2027-05-29, attention: 0.4, audience: {enterprise: 0.8, developer: 0.6, all: 0.2}, confidence: estimated, note: 往年在 5 月底}
+  - {id: sg-ghost-month-2027, name: 农历七月（鬼月）, kind: sensitive, start: 2027-08-02, end: 2027-08-30, attention: 0.4, audience: {consumer: 0.7, prosumer: 0.3, all: 0.1}, confidence: estimated, note: 起止日期是推算值，开发时用农历库计算, rules: [SG-T01]}
+  - {id: sg-national-day-2027, name: 国庆日, kind: opportunity, start: 2027-08-09, end: 2027-08-09, attention: 0.7, audience: {all: 0.7}, confidence: confirmed, note: 可做国庆主题，但不要直接用国旗国徽, rules: [SG-C01]}
+  - {id: sg-deepavali-2027, name: 屠妖节, kind: holiday, start: 2027-10-28, end: 2027-10-28, attention: 0.4, audience: {all: 0.4}, confidence: confirmed}

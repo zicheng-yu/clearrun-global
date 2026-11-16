@@ -1,5 +1,3 @@
-# Copy to .dev.vars for local development (git-ignored). Never commit real keys.
-QLOO_API_KEY=
+# Copy to .dev.vars for live mode (git-ignored). Never commit real keys.
+# Only needed to check your own material with the perception model; the demo cases work without it.
 OPENROUTER_API_KEY=
-# Protects the manual slate-refresh endpoint (any long random string).
-ADMIN_TOKEN=

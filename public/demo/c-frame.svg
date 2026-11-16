@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Georgia, 'Songti SC', serif">
+  <rect width="1600" height="900" fill="#2b2621"/>
+  <!-- three panels, the same performer in each (identical face and build), skin tone darkened in panels 2 and 3 -->
+  <g>
+    <rect x="32" y="90" width="500" height="600" rx="10" fill="#e9dccb"/>
+    <rect x="550" y="90" width="500" height="600" rx="10" fill="#e3d6c3"/>
+    <rect x="1068" y="90" width="500" height="600" rx="10" fill="#ddcfba"/>
+  </g>
+  <g stroke="#4a3f36" stroke-width="3">
+    <path d="M182 520 C182 430 382 430 382 520 L382 690 L182 690 Z" fill="#6f8a9a"/>
+    <circle cx="282" cy="330" r="92" fill="#f0d2b0"/>
+    <path d="M700 520 C700 430 900 430 900 520 L900 690 L700 690 Z" fill="#b5566a"/>
+    <circle cx="800" cy="330" r="92" fill="#a8734c"/>
+    <path d="M1218 520 C1218 430 1418 430 1418 520 L1418 690 L1218 690 Z" fill="#c9a24a"/>
+    <circle cx="1318" cy="330" r="92" fill="#83573a"/>
+  </g>
+  <g fill="#2b2621">
+    <circle cx="250" cy="320" r="8"/><circle cx="314" cy="320" r="8"/>
+    <circle cx="768" cy="320" r="8"/><circle cx="832" cy="320" r="8"/>
+    <circle cx="1286" cy="320" r="8"/><circle cx="1350" cy="320" r="8"/>
+  </g>
+  <g fill="none" stroke="#2b2621" stroke-width="5" stroke-linecap="round">
+    <path d="M252 372 Q282 392 312 372"/><path d="M770 372 Q800 392 830 372"/><path d="M1288 372 Q1318 392 1348 372"/>
+  </g>
+  <path d="M712 268 C730 200 870 200 888 268 C860 236 740 236 712 268 Z" fill="#7a2f45"/>
+  <!-- table with a bowl of bak kut teh in panel 1 -->
+  <rect x="62" y="600" width="440" height="80" rx="8" fill="#8b6a4f"/>
+  <ellipse cx="270" cy="640" rx="130" ry="38" fill="#f4ede2" stroke="#4a3f36" stroke-width="3"/>
+  <ellipse cx="270" cy="634" rx="104" ry="24" fill="#9b6a3c"/>
+  <rect x="200" y="620" width="56" height="18" rx="9" fill="#e9c9a8" stroke="#6b4a2f" stroke-width="2"/>
+  <rect x="270" y="626" width="56" height="18" rx="9" fill="#e9c9a8" stroke="#6b4a2f" stroke-width="2"/>
+  <g font-size="26" fill="#2b2621">
+    <text x="62" y="135">华人阿伯</text>
+    <text x="580" y="135">马来阿姨（同一演员）</text>
+    <text x="1098" y="135">印度叔叔（同一演员）</text>
+    <text x="86" y="590" font-size="20" fill="#5b5148">肉骨茶</text>
+  </g>
+  <rect x="0" y="780" width="1600" height="80" fill="#1c1815"/>
+  <text x="800" y="832" font-size="34" fill="#f4ede2" text-anchor="middle">Mira speaks your language — 华语 · Bahasa Melayu · தமிழ் · English</text>
+  <rect x="24" y="24" width="250" height="40" rx="20" fill="#fffaf2" stroke="#ddd5ca"/>
+  <text x="44" y="51" font-size="20" fill="#8a7f73">示意图 · 视频关键帧</text>
+</svg>
