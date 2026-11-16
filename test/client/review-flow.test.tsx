@@ -87,10 +87,10 @@ describe("example market sync", () => {
 		expect(screen.getByLabelText("本次检测来源：预置示例")).toBeTruthy();
 		expect(screen.queryByText("实时检测")).toBeNull();
 		expect(screen.getByText("服务可用")).toBeTruthy();
-		expect(screen.getByRole("button", { name: "查看修订示例" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "比较原版与修订示例" })).toBeTruthy();
 		expect(screen.queryByRole("button", { name: "对照修订版" })).toBeNull();
 
-		fireEvent.click(screen.getByRole("button", { name: "产品发布文案与用户推荐语" }));
+		fireEvent.click(screen.getByRole("button", { name: "美国宣称文案" }));
 		const us = await settle("us-copy", "US");
 		expect(us.findings.length).toBeGreaterThan(0);
 		expect(screen.getByLabelText("本次检测来源：预置示例")).toBeTruthy();
@@ -99,16 +99,21 @@ describe("example market sync", () => {
 		await settle("us-copy", "KR");
 		expect((screen.getByLabelText("目标市场") as HTMLSelectElement).value).toBe("KR");
 
-		fireEvent.click(screen.getByRole("button", { name: "产品发布文案与用户推荐语" }));
+		fireEvent.click(screen.getByRole("button", { name: "美国宣称文案" }));
 		await settle("us-copy", "US");
 
-		fireEvent.click(screen.getByRole("button", { name: "查看修订示例" }));
-		await settle("us-copy", "US", "localized");
-		expect(screen.getByRole("button", { name: "改稿" }).getAttribute("aria-pressed")).toBe("true");
+		fireEvent.click(screen.getByRole("button", { name: "比较原版与修订示例" }));
+		const board = await screen.findByRole("region", { name: "原版与修订示例对照" });
+		expect(board.textContent).toContain("项已知风险");
+		expect(board.textContent).toContain("项已命中风险");
+		expect(board.textContent).toContain("不是保证通过");
+		expect(board.textContent).not.toMatch(/100% 通过/);
+		expect(within(board).getByRole("heading", { name: /原版/ })).toBeTruthy();
+		expect(within(board).getByRole("heading", { name: /本地化修订示例/ })).toBeTruthy();
 		expect(screen.getByLabelText("本次检测来源：预置示例")).toBeTruthy();
 		expect(screen.queryByLabelText("本次检测来源：实时分析")).toBeNull();
 
-		fireEvent.click(screen.getByRole("button", { name: "多语言宣传片关键帧" }));
+		fireEvent.click(screen.getByRole("button", { name: "新加坡宣传片" }));
 		await settle("sg-frame", "SG");
 		expect(screen.getByRole("button", { name: "初版" }).getAttribute("aria-pressed")).toBe("true");
 

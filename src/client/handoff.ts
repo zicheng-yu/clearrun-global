@@ -58,13 +58,15 @@ export function buildLaunchHandoff(input: {
 
 export function reviewedRiskText(review: ReviewedMarket): string {
 	const name = MARKET_LABEL[review.market];
-	if (review.remaining === 0) return `${name}：已预检，当前规则下没有剩余风险，预检分 ${review.score}`;
+	if (review.remaining === 0) {
+		return `${name}：已预检，已命中 0 项，待处理 0 项。当前规则未命中已知风险，预检评分 ${review.score}。这不是合规认证。`;
+	}
 	const parts = [
 		review.high ? `${review.high} 项高风险` : "",
 		review.medium ? `${review.medium} 项需评估` : "",
 		review.low ? `${review.low} 项注意` : "",
 	].filter(Boolean);
-	return `${name}：已预检，剩余 ${review.remaining} 项风险（${parts.join("，")}），预检分 ${review.score}`;
+	return `${name}：已预检，已命中 ${review.remaining} 项，待处理 ${review.remaining} 项（${parts.join("，")}），预检评分 ${review.score}`;
 }
 
 /** Markets with no assessment stay unscanned, including when they are added to the calendar. */

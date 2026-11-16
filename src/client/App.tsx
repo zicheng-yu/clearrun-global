@@ -13,9 +13,9 @@ type View = "creative" | "launch";
 const VIEW_LABEL: Record<View, string> = { creative: "素材预检", launch: "发布排期" };
 const VIEW_ICON: Record<View, IconName> = { creative: "scan", launch: "calendar" };
 const LIBRARY_ITEMS: Record<string, { icon: IconName; label: string }> = {
-	"kr-kv": { icon: "image", label: "主视觉与隐私页" },
-	"us-copy": { icon: "text", label: "文案与推荐语" },
-	"sg-frame": { icon: "film", label: "多语言宣传片" },
+	"kr-kv": { icon: "image", label: "韩国主视觉" },
+	"us-copy": { icon: "text", label: "美国宣称文案" },
+	"sg-frame": { icon: "film", label: "新加坡宣传片" },
 };
 const fromUrl = (): View => (new URLSearchParams(location.search).get("view") === "launch" ? "launch" : "creative");
 
@@ -57,7 +57,7 @@ function Navigation({ view, materialId, upload, onView, onMaterial, onInfo }: Na
 						key={d.id}
 						className="library-link"
 						title={d.title}
-						aria-label={d.title}
+						aria-label={LIBRARY_ITEMS[d.id]?.label ?? d.title}
 						aria-pressed={view === "creative" && materialId === d.id}
 						onClick={() => onMaterial(d.id)}
 					>
@@ -116,7 +116,12 @@ function WorkspaceInfo({ health, error, onClose }: { health?: Health; error?: st
 					知识库收录 {knowledge.rules.length} 条市场规则、{knowledge.cases.length} 个案例和 {knowledge.calendar.length}{" "}
 					个日历事件。规则详情中可查看核实状态与案例来源。法定假日来自 Nager.Date，预估事件在排期中单独标注。
 				</p>
-				<p>{PRODUCT} 是虚构产品，演示素材用于说明预检流程。预检仅覆盖已收录的风险，不能替代法律意见。</p>
+				<p>{PRODUCT} 是虚构的演示项目，不是这个工具。演示素材用于说明预检流程。预检仅覆盖已收录的风险，不能替代法律意见或投放许可。</p>
+				<h3>分数、压力和修订示例</h3>
+				<p>
+					主结果是已命中项和待处理项。预检评分基于当前知识库规则；100 表示当前规则未命中已知风险，不是合规认证，也不保证通过。档期里的压力指数是模型计算结果，不是真实市场注意力百分比。预置修订稿是本地化修订示例，不会自动改写素材。
+					标记为待核实的案例还没有完成出处核对。
+				</p>
 			</div>
 		</Dialog>
 	);

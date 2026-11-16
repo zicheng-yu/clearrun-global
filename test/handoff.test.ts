@@ -38,7 +38,8 @@ describe("launch handoff", () => {
 		const review = reviewOf(report);
 		expect(review.remaining).toBeGreaterThan(0);
 		expect(marketStatusText("KR", review, true)).toContain("已预检");
-		expect(marketStatusText("KR", review, true)).toContain("剩余");
+		expect(marketStatusText("KR", review, true)).toContain("待处理");
+		expect(marketStatusText("KR", review, true)).toContain("已命中");
 		expect(marketStatusText("US", undefined, true)).toContain("尚未做素材预检");
 		expect(marketStatusText("US", undefined, true)).toContain("不代表审核通过");
 		expect(marketStatusText("SG", undefined, true)).not.toMatch(/已预检|没有剩余风险|风险全消除/);
@@ -49,7 +50,8 @@ describe("launch handoff", () => {
 		if (!kr) throw new Error("kr");
 		const report = assess(kr.localized.signals, ["KR"]).markets[0];
 		if (!report) throw new Error("report");
-		expect(marketStatusText("KR", reviewOf(report), true)).toContain("已预检，当前规则下没有剩余风险");
+		expect(marketStatusText("KR", reviewOf(report), true)).toContain("当前规则未命中已知风险");
+		expect(marketStatusText("KR", reviewOf(report), true)).not.toContain("保证通过");
 		expect(marketStatusText("US", undefined, false)).not.toContain("没有剩余风险");
 	});
 });

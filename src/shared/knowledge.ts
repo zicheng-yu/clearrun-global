@@ -61,6 +61,11 @@ export type EventKind = "holiday" | "rival" | "sensitive" | "opportunity";
 export const EVENT_KIND_LABEL: Record<EventKind, string> = { holiday: "假期", rival: "撞档", sensitive: "敏感期", opportunity: "顺势" };
 
 export type Confidence = "confirmed" | "rule" | "estimated";
+export const CONFIDENCE_LABEL: Record<Confidence, string> = {
+	confirmed: "已确定",
+	rule: "按规则推算",
+	estimated: "预计",
+};
 
 export interface CalendarEvent {
 	id: string;

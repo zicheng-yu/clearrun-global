@@ -1,13 +1,41 @@
 import { useRef, useState } from "react";
-import type { Assessment, Finding, MarketAssessment } from "../engine/creative/assess.ts";
+import { assess, type Assessment, type Finding, type MarketAssessment } from "../engine/creative/assess.ts";
 import type { DetectedSignal } from "../shared/api.ts";
-import type { DemoAsset } from "../shared/demo.ts";
+import type { DemoAsset, DemoCase } from "../shared/demo.ts";
 import { MARKET_LABEL, STAGE_LABEL, type Market } from "../shared/knowledge.ts";
-import { signalLabel } from "../shared/signals.ts";
+import { signalLabel, type SignalId } from "../shared/signals.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import { Dialog, Highlight, SeverityLabel, VerifiedLabel, signalNeedles } from "./ui.tsx";
 
 const ASSET_ICON: Record<DemoAsset["kind"], IconName> = { image: "image", copy: "text", page: "page" };
+const MARKS = "①②③④⑤⑥⑦⑧⑨⑩";
+const SHORT_SIGNAL: Partial<Record<SignalId, string>> = {
+	"gesture.pinch": "手势",
+	"people.one_actor_many_races": "选角",
+	"people.altered_skin_tone": "肤色",
+	"food.pork": "猪肉",
+	"food.alcohol": "酒精",
+	"claim.replace_humans": "取代",
+	"claim.absolute_accuracy": "绝对宣称",
+	"claim.emotional_ghostwriting": "情感代笔",
+	"claim.ai_testimonial": "推荐语",
+	"privacy.no_local_policy": "隐私语言",
+	"privacy.no_data_residency": "数据驻留",
+	"ai.no_disclosure": "AI 标识",
+};
+
+function annotationMark(index: number, signal: SignalId): string {
+	const mark = MARKS[index] ?? String(index + 1);
+	return `${mark} ${SHORT_SIGNAL[signal] ?? signalLabel(signal).slice(0, 4)}`;
+}
+
+function sourceHost(url: string): string {
+	try {
+		return new URL(url).hostname.replace(/^www\./, "");
+	} catch {
+		return url;
+	}
+}
 
 function RuleDetails({ finding, assets, onClose }: { finding: Finding; assets: DemoAsset[]; onClose: () => void }) {
 	const { rule } = finding;
@@ -101,6 +129,8 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 					const [x, y, w, h] = s.box;
 					const finding = active?.signals.includes(s) ? active : findings.find((f) => f.signals.includes(s));
 					const chosen = Boolean(active?.signals.includes(s));
+					const boxed = mine.filter((item) => item.box);
+					const mark = annotationMark(Math.max(0, boxed.indexOf(s)), s.signal);
 					return (
 						<div
 							key={i}
@@ -108,11 +138,11 @@ function AssetContent({ asset, signals, findings, active, onFinding }: PreviewPr
 							style={{ left: x * 100 + "%", top: y * 100 + "%", width: w * 100 + "%", height: h * 100 + "%" }}
 						>
 							{finding ? (
-								<button onClick={() => onFinding(finding)} title={s.evidence} aria-label={"定位规则 " + finding.rule.id}>
-									{finding.rule.id}
+								<button onClick={() => onFinding(finding)} title={s.evidence} aria-label={mark + "，规则 " + finding.rule.id}>
+									{mark}
 								</button>
 							) : (
-								<span>{signalLabel(s.signal)}</span>
+								<span>{mark}</span>
 							)}
 						</div>
 					);
@@ -194,31 +224,95 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 				</div>
 				{findings.length > 0 ? (
 					<div className="issue-list">
-						{findings.map((f) => (
-							<button
-								className="issue-row"
-								key={f.rule.id}
-								aria-pressed={active?.rule.id === f.rule.id}
-								onClick={() => selectFinding(f)}
-							>
-								<span className="issue-copy">
-									<span className="issue-title">{f.signals[0].evidence || signalLabel(f.signals[0].signal)}</span>
-									<span className="issue-meta">
-										<span className="mono">{f.rule.id}</span>
-										<span>{f.rule.category}</span>
-									</span>
-								</span>
-								<SeverityLabel severity={f.rule.severity} />
-								<Icon name="chevron" size={13} />
-							</button>
-						))}
+						{findings.map((f) => {
+							const evidence = f.signals.map((s) => s.evidence || signalLabel(s.signal)).join("；");
+							const story = active?.rule.id === f.rule.id;
+							const example = f.cases[0];
+							return (
+								<article className="risk-card" key={f.rule.id}>
+									<button
+										className="issue-row"
+										aria-pressed={story}
+										aria-label={f.rule.looks_for + "。素材证据：" + evidence}
+										onClick={() => selectFinding(f)}
+									>
+										<span className="issue-copy">
+											<span className="issue-title">{f.rule.looks_for}</span>
+											<span className="issue-meta">
+												<span>素材证据</span>
+												<span>{evidence}</span>
+											</span>
+										</span>
+										<SeverityLabel severity={f.rule.severity} />
+										<Icon name="chevron" size={13} />
+									</button>
+									{story && (
+										<div className="risk-story">
+											<p>
+												<span className="story-label">素材证据</span>
+												{evidence}
+											</p>
+											<p>
+												<span className="story-label">原因</span>
+												{f.rule.why}
+											</p>
+											<p>
+												<span className="story-label">修改建议</span>
+												{f.rule.fix}
+											</p>
+											{example ? (
+												<p>
+													<span className="story-label">关联案例</span>
+													{example.brand} · {example.summary.trim()}
+													<span className="case-source">
+														来源 {example.sources[0] ? sourceHost(example.sources[0]) : "未附链接"}
+														<VerifiedLabel value={example.verified} />
+													</span>
+												</p>
+											) : (
+												<p>
+													<span className="story-label">关联案例</span>
+													这条规则尚未关联案例。
+												</p>
+											)}
+											<p className="scope-note">以上是知识库规则对当前素材的解释和改法，不是法律禁令，也不是投放许可。</p>
+											<div className="fix-actions">
+												<button className="text-button" onClick={() => setDialog("rule")}>
+													<Icon name="book" size={14} />
+													完整案例与来源{f.cases.length ? " (" + f.cases.length + ")" : ""}
+													<Icon name="arrow" size={14} />
+												</button>
+												<button
+													className="text-button mobile-jump"
+													onClick={() => {
+														previewSection.current?.focus({ preventScroll: true });
+														previewSection.current?.scrollIntoView({ block: "start" });
+													}}
+												>
+													<Icon name="target" size={14} />
+													定位素材
+												</button>
+											</div>
+										</div>
+									)}
+									<details className="tech-details">
+										<summary>技术详情</summary>
+										<p>
+											<span className="mono">{f.rule.id}</span>
+											<VerifiedLabel value={f.rule.verified} />
+											<span>{f.rule.category}</span>
+										</p>
+									</details>
+								</article>
+							);
+						})}
 					</div>
 				) : (
 					<div className="empty-panel">
 						<Icon name={report ? "shield" : error ? "alert" : "scan"} size={22} />
 						<p>
 							{report
-								? "未命中" + MARKET_LABEL[market] + "已收录的素材风险规则。"
+								? "当前规则未命中" + MARKET_LABEL[market] + "已收录的素材风险。这不是合规认证。"
 								: error
 									? "检测失败，暂时没有可用结论。"
 									: "正在读取素材检测结果…"}
@@ -226,46 +320,19 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 					</div>
 				)}
 				{resolved.length > 0 && (
-					<details className="resolved-issues">
-						<summary>对照原版，{resolved.length} 项风险在本版未再命中</summary>
+					<div className="resolved-issues">
+						<h3>对照原版，{resolved.length} 项风险在本版未再命中</h3>
 						<ul>
 							{resolved.map((f) => (
 								<li key={f.rule.id}>
 									<Icon name="check" size={13} />
-									<span>{f.signals[0].evidence || signalLabel(f.signals[0].signal)}</span>
-									<small className="mono">{f.rule.id}</small>
+									<span>
+										{f.rule.looks_for}
+										<small>原版证据：{f.signals[0].evidence || signalLabel(f.signals[0].signal)}</small>
+									</span>
 								</li>
 							))}
 						</ul>
-					</details>
-				)}
-				{active && (
-					<div className="fix-panel">
-						<div className="fix-head">
-							<h3>修改建议</h3>
-							<div className="meta-line">
-								<span className="mono">{active.rule.id}</span>
-								<VerifiedLabel value={active.rule.verified} />
-							</div>
-						</div>
-						<p>{active.rule.fix}</p>
-						<div className="fix-actions">
-							<button className="text-button" onClick={() => setDialog("rule")}>
-								<Icon name="book" size={14} />
-								规则依据与案例{active.cases.length ? " (" + active.cases.length + ")" : ""}
-								<Icon name="arrow" size={14} />
-							</button>
-							<button
-								className="text-button mobile-jump"
-								onClick={() => {
-									previewSection.current?.focus({ preventScroll: true });
-									previewSection.current?.scrollIntoView({ block: "start" });
-								}}
-							>
-								<Icon name="target" size={14} />
-								定位素材
-							</button>
-						</div>
 					</div>
 				)}
 				{!!report?.timing.length && (
@@ -291,5 +358,112 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 				</Dialog>
 			)}
 		</div>
+	);
+}
+
+function ComparePane({
+	title,
+	assets,
+	signals,
+	report,
+}: {
+	title: string;
+	assets: DemoAsset[];
+	signals: DetectedSignal[];
+	report: MarketAssessment;
+}) {
+	const [rule, setRule] = useState<string>();
+	const findings = report.findings;
+	return (
+		<article className="compare-pane">
+			<h3>{title}</h3>
+			<p className="compare-count">已命中 {findings.length} 项 · 待处理 {findings.length} 项</p>
+			{assets.map((asset) => {
+				const onAsset = findings.filter((finding) => finding.signals.some((signal) => signal.asset === asset.id));
+				const active = onAsset.find((finding) => finding.rule.id === rule) ?? onAsset[0];
+				return (
+					<div key={asset.id} className="compare-asset">
+						<AssetContent
+							asset={asset}
+							signals={signals}
+							findings={findings}
+							active={active}
+							onFinding={(finding) => setRule(finding.rule.id)}
+						/>
+					</div>
+				);
+			})}
+		</article>
+	);
+}
+
+export function CompareBoard({
+	demo,
+	market,
+	originalSignals,
+	localizedSignals,
+}: {
+	demo: DemoCase;
+	market: Market;
+	originalSignals: DetectedSignal[];
+	localizedSignals: DetectedSignal[];
+}) {
+	const [pane, setPane] = useState<"both" | "original" | "localized">("both");
+	const before = assess(originalSignals, [market]).markets[0];
+	const after = assess(localizedSignals, [market]).markets[0];
+	if (!before || !after) return null;
+	const resolved = before.findings.filter((old) => !after.findings.some((finding) => finding.rule.id === old.rule.id));
+	const ids = [...new Set([...demo.original.assets, ...demo.localized.assets].map((asset) => asset.id))];
+	const paired = (assets: DemoAsset[]) => ids.map((id) => assets.find((asset) => asset.id === id)).filter((asset): asset is DemoAsset => !!asset);
+	return (
+		<section className="compare-board-wrap" aria-label="原版与修订示例对照">
+			<div className="compare-delta">
+				<p>
+					{before.findings.length} 项已知风险 → {after.findings.length} 项已命中风险
+				</p>
+				<p className="scope-note">
+					这是预置的本地化修订示例，不会自动改写素材，也不是现场生成。
+					{after.findings.length === 0 ? " 0 项表示当前规则未命中已知风险，不是保证通过。" : " 变化只统计当前知识库规则。"}
+				</p>
+			</div>
+			<div className="compare-changes">
+				<h3>已解除的风险</h3>
+				{resolved.length === 0 ? (
+					<p>对照后，已命中风险没有减少。</p>
+				) : (
+					<ul>
+						{resolved.map((finding) => (
+							<li key={finding.rule.id}>
+								<Icon name="check" size={13} />
+								<span>
+									{finding.rule.looks_for}
+									<small>原版证据：{finding.signals[0]?.evidence || signalLabel(finding.signals[0].signal)}</small>
+								</span>
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+			<div className="segmented compare-layout" role="group" aria-label="对照布局">
+				<button type="button" aria-pressed={pane === "both"} onClick={() => setPane("both")}>
+					并排
+				</button>
+				<button type="button" aria-pressed={pane === "original"} onClick={() => setPane("original")}>
+					只看原版
+				</button>
+				<button type="button" aria-pressed={pane === "localized"} onClick={() => setPane("localized")}>
+					只看修订示例
+				</button>
+			</div>
+			<div className={"compare-board layout-" + pane}>
+				<ComparePane title={"原版 · " + demo.original.label} assets={paired(demo.original.assets)} signals={originalSignals} report={before} />
+				<ComparePane
+					title={"本地化修订示例 · " + demo.localized.label}
+					assets={paired(demo.localized.assets)}
+					signals={localizedSignals}
+					report={after}
+				/>
+			</div>
+		</section>
 	);
 }

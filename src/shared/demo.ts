@@ -6,6 +6,7 @@
  */
 import type { DetectedSignal } from "./api.ts";
 import type { Market, Segment } from "./knowledge.ts";
+import type { SignalId } from "./signals.ts";
 
 /** A fictional product: not a real brand. */
 export const PRODUCT = "Mira Agent";
@@ -167,3 +168,13 @@ export const DEMO_CASES: DemoCase[] = [
 ];
 
 export const demoCase = (id: string): DemoCase | undefined => DEMO_CASES.find((c) => c.id === id);
+
+/**
+ * Fixed theme → calendar script. The Singapore original already carries `food.pork`;
+ * `sg-ramadan-2027` in the calendar blocks that signal. Removing the theme must clear the same week.
+ */
+export const THEME_SCHEDULE_SCRIPT: { demoId: string; signal: SignalId; eventId: string } = {
+	demoId: "sg-frame",
+	signal: "food.pork",
+	eventId: "sg-ramadan-2027",
+};
