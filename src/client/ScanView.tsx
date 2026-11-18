@@ -204,7 +204,11 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 					<h1>{title}</h1>
 					<p className="purpose-line">
 						ClearRun 检查同一份素材在韩国、美国、新加坡可能碰到的不同规则。
-						{own ? "下面是你上传的素材。" : `${PRODUCT} 是被检查的演示项目，不是这个工具。`}
+						{own
+							? "下面是你上传的素材。"
+							: demo.id === "kr-kv"
+								? "这一例是 Apple 官网的 iPhone Air 主视觉，用来检查韩国手势。Mira Agent 仍是另外两个示例里的虚构产品。"
+								: `${PRODUCT} 是被检查的演示项目，不是这个工具。`}
 					</p>
 				</div>
 				<button className="button" onClick={onImport}>

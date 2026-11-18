@@ -123,9 +123,9 @@ function AssetContent({ asset, signals, findings, active, illustrative, onFindin
 	}
 	return (
 		<div className="artboard">
-			{illustrative && <p className="demo-asset-note">演示素材，不是真实广告</p>}
+			{(asset.note || illustrative) && <p className="demo-asset-note">{asset.note || "演示素材，不是真实广告"}</p>}
 			<div className="artwork">
-				<img src={asset.content} alt={asset.label} />
+				<img src={asset.content} alt={asset.note || asset.label} />
 				{mine.map((s, i) => {
 					if (!s.box) return null;
 					const [x, y, w, h] = s.box;

@@ -28,7 +28,7 @@
 - 主结果是「已命中 X 项 / 待处理 X 项」。预检评分是辅助指标，标明「基于当前知识库规则的预检评分」。
 - 100 分只表示当前规则未命中已知风险。它不是合规认证，也不保证通过。
 - 档期压力是模型计算的档期压力指数，不是真实市场注意力百分比。
-- 三个示例里的修订稿是预置的本地化修订示例，不会自动改写素材，也不是现场生成。SVG 和生成图都标为演示素材，不是真实广告；韩国、美国、新加坡用同一套 Mira Agent 字标和紫色产品标记，语言和本地化差异仍然分开。
+- 三个示例里的修订稿是预置对照，不会自动改写素材。韩国例使用 Apple 官网的 iPhone Air 产品图。美国和新加坡例使用署名照片，并写明它们不是 Mira 的实拍。来源见 [`public/demo/CREDITS.md`](public/demo/CREDITS.md)。
 - `verified: false` 的案例显示「待核实」。规则解释和修改建议不是法律禁令或投放许可。
 - 把同一批已识别信号套到另一个市场，界面会标明「同批信号的跨市场规则评估」，不表示对每个市场重新做了完整感知。
 
@@ -78,11 +78,11 @@ npm run knowledge        # 校验并重新生成 src/shared/knowledge.gen.ts
 
 | 案例 | 雷点 | 关联真实案例 |
 |---|---|---|
-| 🇰🇷 同一张 KV，韩国要单独出一版 | 捏手势、隐私政策没有韩文版、没写数据存储地 | iPhone Air 韩国版、GS25、冒险岛、DeepSeek 被 PIPC 暂停下载 |
-| 🇺🇸 美国发布文案 | "取代人类"、"100% 准确"、AI 代写情感内容、AI 生成的推荐语 | Apple Crush、Gemini Dear Sydney、Artisan、FTC Operation AI Comply |
-| 🇸🇬 新加坡视频关键帧 | 一人分饰三族、刻意加深肤色、肉骨茶 | NETS E-Pay brownface |
+| 🇰🇷 iPhone Air 官网主视觉 | 全球版捏住机身，韩国版只有产品 | iPhone Air 韩国版、GS25、冒险岛 |
+| 🇺🇸 美国发布文案 | "取代人类"、"100% 准确"、AI 代写情感内容、AI 生成的推荐语。配图是图库里的电脑，不是 Mira | Apple Crush、Gemini Dear Sydney、Artisan、FTC Operation AI Comply |
+| 🇸🇬 食物照片 | 肉骨茶会触发猪肉主题；咖椰吐司没有猪肉。不是一人分饰多族的画面 | NETS E-Pay brownface（知识库案例，不在这两张照片里） |
 
-`public/demo/` 存放演示素材。主视觉使用 AI 生成的全球版与韩国本地化版，另外两个案例使用 SVG 示意图。替换素材时：
+`public/demo/` 存放演示素材。韩国例是线上已在用的 Apple 产品图。美国和新加坡例是按许可下载的照片，出处在 [`public/demo/CREDITS.md`](public/demo/CREDITS.md)。替换素材时：
 - 文件名保持不变；
 - 如果画面构图变了，同步更新 `demo.ts` 里对应信号的 `box`（框的位置，用占图片宽高的比例表示）。
 

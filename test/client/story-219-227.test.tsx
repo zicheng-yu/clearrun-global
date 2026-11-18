@@ -48,7 +48,7 @@ describe("first screen and risk story", () => {
 		const { rerender } = render(
 			<ScanView demo={demo} market="KR" onMarketChange={onMarket} onImport={() => undefined} onRevise={() => undefined} onPlanLaunch={() => undefined} />,
 		);
-		expect(screen.getByText(/Mira Agent 是被检查的演示项目/)).toBeTruthy();
+		expect(screen.getByText(/iPhone Air 主视觉/)).toBeTruthy();
 		expect(screen.getByRole("button", { name: /韩国市场/ })).toBeTruthy();
 		expect(screen.getByRole("button", { name: /美国市场/ })).toBeTruthy();
 		expect(screen.getByRole("button", { name: /新加坡市场/ })).toBeTruthy();
@@ -73,10 +73,7 @@ describe("first screen and risk story", () => {
 		expect(within(list).getByText("KR-G01")).toBeTruthy();
 		expect(screen.queryByRole("dialog")).toBeNull();
 		expect(document.querySelector(".annotation button")?.textContent).toContain("手势");
-
-		fireEvent.click(screen.getByRole("button", { name: /隐私政策只有英文版/ }));
-		expect(document.querySelector("mark")?.textContent).toContain("隐私政策只有英文版");
-		expect(screen.queryByRole("dialog")).toBeNull();
+		expect(screen.getByText(/Apple 官网产品图/)).toBeTruthy();
 	});
 });
 

@@ -226,7 +226,7 @@ describe("precheck to schedule", () => {
 		fireEvent.click(screen.getByRole("button", { name: "返回修改素材" }));
 		await settle("kr-kv", "KR");
 		expect(new URL(location.href).searchParams.get("view")).toBeNull();
-		expect(screen.getByRole("heading", { name: "产品主视觉与隐私页" })).toBeTruthy();
+		expect(screen.getByRole("heading", { name: "iPhone Air 官网主视觉" })).toBeTruthy();
 	});
 
 	it("does not describe an unreviewed calendar as already checked", () => {

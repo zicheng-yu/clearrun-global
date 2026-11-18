@@ -45,11 +45,9 @@ describe("preset evidence on the page", () => {
 		const { unmount } = render(
 			<ReviewPanel assets={kr.original.assets} signals={kr.original.signals} result={krResult} report={krResult.markets[0]} market="KR" />,
 		);
-		fireEvent.click(screen.getByRole("button", { name: /隐私政策只有英文版/ }));
-		const krMarks = [...document.querySelectorAll("mark")].map((mark) => mark.textContent);
-		expect(krMarks).toContain("没有写明用户数据存储在哪个地区、是否跨境传输");
-		expect(krMarks).toContain("隐私政策只有英文版");
-		expect(screen.queryByText("无法在当前文本中精确定位")).toBeNull();
+		expect(screen.getByRole("button", { name: /捏住机身一端/ })).toBeTruthy();
+		expect(screen.getByText(/Apple 官网产品图/)).toBeTruthy();
+		expect(screen.queryByText("隐私政策只有英文版")).toBeNull();
 		unmount();
 
 		const us = demoCase("us-copy");
