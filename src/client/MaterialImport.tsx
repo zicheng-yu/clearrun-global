@@ -4,7 +4,6 @@ import { DEMO_CASES } from "../shared/demo.ts";
 import type { Market } from "../shared/knowledge.ts";
 import { imageToDataUrl, scan } from "./api.ts";
 import { knownScanSource } from "./origin.ts";
-import { Icon } from "./Icon.tsx";
 import { Dialog, MarketSelect } from "./ui.tsx";
 
 export interface UploadedMaterial {
@@ -113,7 +112,6 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 					)}
 					{mode !== "live" && (
 						<p className="notice">
-							<Icon name="info" />
 							{serviceError
 								? "检测服务暂时不可用。"
 								: mode === "offline"
@@ -181,7 +179,6 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 						{busy ? "取消检查" : "关闭"}
 					</button>
 					<button type="submit" className="button primary" disabled={(!demoOnly && mode !== "live") || busy}>
-						<Icon name="scan" />
 						{busy ? "检查中…" : demoOnly ? "开始示例预检" : "开始预检"}
 					</button>
 				</div>

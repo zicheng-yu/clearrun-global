@@ -8,16 +8,20 @@ import { LaunchView } from "./LaunchView.tsx";
 import { MaterialImport, type UploadedMaterial } from "./MaterialImport.tsx";
 import { ScanView, type LaunchHandoff } from "./ScanView.tsx";
 import { Dialog } from "./ui.tsx";
+import { WorkflowView } from "./WorkflowView.tsx";
 
-type View = "creative" | "launch";
-const VIEW_LABEL: Record<View, string> = { creative: "素材预检", launch: "发布排期" };
-const VIEW_ICON: Record<View, IconName> = { creative: "scan", launch: "calendar" };
+type View = "overview" | "creative" | "launch";
+const VIEW_LABEL: Record<View, string> = { overview: "宣发流程", creative: "素材预检", launch: "发布排期" };
+const VIEW_ICON: Record<View, IconName> = { overview: "workspace", creative: "scan", launch: "calendar" };
 const LIBRARY_ITEMS: Record<string, { icon: IconName; label: string }> = {
 	"kr-kv": { icon: "image", label: "韩国主视觉" },
 	"us-copy": { icon: "text", label: "美国宣称文案" },
 	"sg-frame": { icon: "film", label: "新加坡宣传片" },
 };
-const fromUrl = (): View => (new URLSearchParams(location.search).get("view") === "launch" ? "launch" : "creative");
+const fromUrl = (): View => {
+	const v = new URLSearchParams(location.search).get("view");
+	return v === "creative" || v === "launch" ? v : "overview";
+};
 
 interface NavigationProps {
 	view: View;
@@ -32,12 +36,13 @@ function Navigation({ view, materialId, upload, onView, onMaterial, onInfo }: Na
 	return (
 		<div className="nav-content">
 			<div className="brand">
-				<img src="/favicon.svg" width="29" height="29" alt="" />
+				<img src="/favicon.svg" width="24" height="24" alt="" />
 				<span>ClearRun</span>
+				<small>出海版</small>
 			</div>
 			<nav aria-label="工作台导航" className="nav-group">
 				<p className="nav-heading">工作台</p>
-				{(["creative", "launch"] as const).map((v) => (
+				{(["overview", "creative", "launch"] as const).map((v) => (
 					<button
 						key={v}
 						className="nav-link"
@@ -135,6 +140,7 @@ export function App() {
 	const [reviewRun, setReviewRun] = useState(0);
 	const [upload, setUpload] = useState<UploadedMaterial>();
 	const [modal, setModal] = useState<"navigation" | "info" | "import" | "revise" | null>(null);
+	const [creativeReady, setCreativeReady] = useState(() => fromUrl() === "creative");
 	const [planner, setPlanner] = useState<{ revision: number; handoff?: LaunchHandoff } | null>(() =>
 		fromUrl() === "launch" ? { revision: 0 } : null,
 	);
@@ -143,6 +149,7 @@ export function App() {
 		const restore = () => {
 			const next = fromUrl();
 			setView(next);
+			if (next === "creative") setCreativeReady(true);
 			if (next === "launch") setPlanner((p) => p ?? { revision: 0 });
 			setModal(null);
 		};
@@ -152,10 +159,11 @@ export function App() {
 
 	const open = (next: View) => {
 		setModal(null);
+		if (next === "creative") setCreativeReady(true);
 		if (next === "launch") setPlanner((p) => p ?? { revision: 0 });
 		if (view !== next) {
 			const url = new URL(location.href);
-			if (next === "launch") url.searchParams.set("view", "launch");
+			if (next !== "overview") url.searchParams.set("view", next);
 			else url.searchParams.delete("view");
 			history.pushState(null, "", url);
 			setView(next);
@@ -215,32 +223,58 @@ export function App() {
 						<button className="icon-button open-nav" aria-label="打开工作台导航" onClick={() => setModal("navigation")}>
 							<Icon name="workspace" size={19} />
 						</button>
-						<Icon name="workspace" size={16} className="desktop-crumb-icon" />
 						<span className="workspace-label">出海工作台</span>
 						<span className="crumb-slash">/</span>
 						<span>{VIEW_LABEL[view]}</span>
 					</div>
-					<span className={"service-status " + (mode === "live" ? "connected" : "")} title={serviceTitle}>
+					<span className={"service-status" + (mode === "live" ? " connected" : health.error ? " failed" : "")} title={serviceTitle}>
 						<i />
 						{serviceLabel}
 					</span>
 				</header>
 				<main id="work-area" tabIndex={-1}>
-					<div hidden={view !== "creative"}>
-						<ScanView
-							key={materialId + "/" + reviewRun}
-							demo={demo}
-							own={activeUpload}
-							market={market}
-							onMarketChange={setMarket}
-							onImport={() => setModal("import")}
-							onRevise={() => setModal("revise")}
-							onPlanLaunch={(handoff) => {
-								setPlanner((p) => ({ revision: (p?.revision ?? 0) + 1, handoff }));
+					{view === "overview" && (
+						<WorkflowView
+							onInput={() => setModal("import")}
+							onCase={startReview}
+							onPlan={() => {
+								setPlanner((p) => ({ revision: (p?.revision ?? 0) + 1 }));
+								open("launch");
+							}}
+							onSingapore={() => {
+								setPlanner((p) => ({
+									revision: (p?.revision ?? 0) + 1,
+									handoff: {
+										markets: ["US", "SG"],
+										segment: "consumer",
+										themes: [],
+										source: "春节前消费产品发布",
+										from: "2027-01-18",
+										reviewed: [],
+										origin: "offline",
+									},
+								}));
 								open("launch");
 							}}
 						/>
-					</div>
+					)}
+					{creativeReady && (
+						<div hidden={view !== "creative"}>
+							<ScanView
+								key={materialId + "/" + reviewRun}
+								demo={demo}
+								own={activeUpload}
+								market={market}
+								onMarketChange={setMarket}
+								onImport={() => setModal("import")}
+								onRevise={() => setModal("revise")}
+								onPlanLaunch={(handoff) => {
+									setPlanner((p) => ({ revision: (p?.revision ?? 0) + 1, handoff }));
+									open("launch");
+								}}
+							/>
+						</div>
+					)}
 					{planner && (
 						<div hidden={view !== "launch"}>
 							<LaunchView key={planner.revision} handoff={planner.handoff} onReturn={() => open("creative")} />

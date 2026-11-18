@@ -76,10 +76,7 @@ function Rollout({ plan, onSelect }: { plan: LaunchPlan; onSelect: (s: WeekSelec
 	const earliest = plan.request.from;
 	return (
 		<section className="rollout" aria-label="推荐发布周">
-			<h2 className="section-title">
-				<Icon name="calendar" />
-				推荐发布周
-			</h2>
+			<h2 className="section-title">推荐发布周</h2>
 			<div className="rollout-steps">
 				{plan.markets.map((m, i) => {
 					const step = plan.rollout.find((s) => s.market === m.market);
@@ -148,10 +145,7 @@ function PressureCalendar({
 	return (
 		<section className="calendar-section" aria-label="档期压力日历">
 			<div className="section-head">
-				<h2 className="section-title">
-					<Icon name="calendar" />
-					档期压力日历
-				</h2>
+				<h2 className="section-title">档期压力日历</h2>
 				<span className="section-meta">
 					{weeks[0].week} — {addDays(weeks[weeks.length - 1].week, 6)}
 				</span>
@@ -307,7 +301,6 @@ function WeekDetail({
 			</div>
 			{!week.covered && (
 				<p className="notice">
-					<Icon name="info" />
 					{week.week < coverage.start
 						? "这一周早于日历覆盖起点 " + coverage.start + "，超出数据范围，不足以评估。"
 						: "这一周的后续传播期超出日历覆盖终点 " + coverage.end + "，超出数据范围，不足以评估。"}
@@ -318,10 +311,7 @@ function WeekDetail({
 				const e = eventById(b.eventId);
 				return (
 					<div key={b.eventId} className="date-conflict">
-						<h3>
-							<Icon name="alert" size={15} />
-							主题冲突 · {e?.name}
-						</h3>
+						<h3>主题冲突 · {e?.name}</h3>
 						<p>
 							{e?.start} — {e?.end} · {b.signals.map(signalLabel).join("、")}
 						</p>
@@ -362,10 +352,7 @@ function WeekDetail({
 					})}
 				</div>
 			) : week.covered ? (
-				<p className="quiet-note">
-					<Icon name="info" size={15} />
-					已收录事件里，这三周没有会抬高档期压力指数的撞档。
-				</p>
+				<p className="quiet-note">已收录事件里，这三周没有会抬高档期压力指数的撞档。</p>
 			) : null}
 			{!!week.opportunities.length && (
 				<p className="opportunity-note">顺势窗口 · {week.opportunities.map((id) => eventById(id)?.name).join("、")}</p>
@@ -389,7 +376,7 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 	const [markets, setMarkets] = useState<Market[]>(handoff?.markets ?? ["US", "SG", "KR"]);
 	const [segment, setSegment] = useState<Segment>(handoff?.segment ?? "prosumer");
 	const [themes, setThemes] = useState<SignalId[]>(perceived);
-	const [from, setFrom] = useState(() => addDays(isoDay(new Date()), 14));
+	const [from, setFrom] = useState(() => handoff?.from ?? addDays(isoDay(new Date()), 14));
 	const [weeks, setWeeks] = useState(26);
 	const [selected, setSelected] = useState<WeekSelection>();
 	const [filtersOpen, setFiltersOpen] = useState(false);
@@ -485,14 +472,12 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 					<h1>市场发布计划</h1>
 				</div>
 				<button className="button" aria-expanded={filtersOpen} aria-controls="plan-filters" onClick={() => setFiltersOpen((v) => !v)}>
-					<Icon name="adjust" />
-					排期条件
+					{filtersOpen ? "收起排期条件" : "排期条件"}
 				</button>
 			</div>
 			<section className="precheck-bridge" aria-label="素材预检与上线市场">
 				{handoff ? (
 					<div className="source-material">
-						<Icon name="stack" size={15} />
 						<span>已带入素材</span>
 						<strong>{handoff.source}</strong>
 						<OriginNote phase="ready" source={handoff.origin} model={handoff.model} fallbackModel={handoff.fallbackModel} />
@@ -510,10 +495,7 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 						)}
 					</div>
 				) : (
-					<p className="notice">
-						<Icon name="info" />
-						这次排期没有素材预检。下面的市场都尚未做素材预检，档期建议不代表素材已审核通过。
-					</p>
+					<p className="notice">这次排期没有素材预检。下面的市场都尚未做素材预检，档期建议不代表素材已审核通过。</p>
 				)}
 				<div className="market-scope">
 					<p className="minor-label">上线市场</p>
@@ -632,7 +614,6 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 			)}
 			{mondayOf(from) < from && (
 				<p className="notice">
-					<Icon name="info" />
 					最早上线日是 {from}。它所在发布周从周一 {mondayOf(from)} 起算。
 					{plan.markets.some((m) => m.weeks[0]?.week === mondayOf(from) && m.weeks[0]?.covered)
 						? "推荐日是 " + launchDay(mondayOf(from), from) + "，不会早于最早上线日。"
@@ -642,7 +623,6 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 			)}
 			{plan.markets.some((m) => m.weeks.some((w) => !w.covered)) && (
 				<p className="notice">
-					<Icon name="info" />
 					日历覆盖 {plan.coverage.start} 至 {plan.coverage.end}。超出这段的周不足以评估，不会作为满分推荐。
 				</p>
 			)}
@@ -733,15 +713,9 @@ export function LaunchView({ handoff, onReturn }: { handoff?: LaunchHandoff; onR
 							</p>
 						</div>
 					) : plannedDay && detailPlan.weeks.some((week) => week.week === mondayOf(plannedDay)) ? (
-						<p className="notice">
-							<Icon name="info" />
-							原定周已在当前范围内，但还没有另一周可以比较。
-						</p>
+						<p className="notice">原定周已在当前范围内，但还没有另一周可以比较。</p>
 					) : plannedDay ? (
-						<p className="notice">
-							<Icon name="info" />
-							原定日期不在当前规划范围内，无法和推荐周比较。可以扩大范围或改日期。
-						</p>
+						<p className="notice">原定日期不在当前规划范围内，无法和推荐周比较。可以扩大范围或改日期。</p>
 					) : (
 						<p className="scope-note">还没有原定周。填入日期后，这里会说明建议保留还是调整。</p>
 					)}

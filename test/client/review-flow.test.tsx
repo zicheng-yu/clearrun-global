@@ -80,9 +80,13 @@ afterEach(() => {
 });
 
 describe("example market sync", () => {
-	it("follows each example focus, then keeps a market the user picks afterwards", async () => {
+	it("starts on WorkflowView at /, then follows each example focus and keeps a market the user picks afterwards", async () => {
 		installFetch("live");
 		render(<App />);
+		expect(screen.getByRole("heading", { name: "出海宣发预检" })).toBeTruthy();
+		expect(new URL(location.href).searchParams.get("view")).toBeNull();
+		fireEvent.click(screen.getByRole("button", { name: "素材预检" }));
+		expect(new URL(location.href).searchParams.get("view")).toBe("creative");
 		await settle("kr-kv", "KR");
 		expect(screen.getByLabelText("本次检测来源：预置示例")).toBeTruthy();
 		expect(screen.queryByText("实时检测")).toBeNull();
@@ -125,6 +129,7 @@ describe("example market sync", () => {
 	it("lets the import dialog move to an example focus and then honor a different market", async () => {
 		installFetch("offline");
 		render(<App />);
+		fireEvent.click(screen.getByRole("button", { name: "素材预检" }));
 		await screen.findByLabelText("本次检测来源：离线演示");
 		fireEvent.click(screen.getByRole("button", { name: "新建预检" }));
 		const dialog = await screen.findByRole("dialog", { name: "新建素材预检" });
@@ -144,6 +149,7 @@ describe("result origin", () => {
 	it("shows a failed scan as a failure and recovers without inventing a live result", async () => {
 		installFetch("live", { failScans: true });
 		render(<App />);
+		fireEvent.click(screen.getByRole("button", { name: "素材预检" }));
 		expect(await screen.findByLabelText("本次检测来源：检测失败")).toBeTruthy();
 		expect(screen.getAllByText(/没有可用结论/).length).toBeGreaterThan(0);
 		expect(screen.queryByLabelText("本次检测来源：实时分析")).toBeNull();
@@ -202,6 +208,7 @@ describe("precheck to schedule", () => {
 	it("keeps Korea's remaining risks, adds unscanned markets, and returns to the same material", async () => {
 		installFetch("live");
 		render(<App />);
+		fireEvent.click(screen.getByRole("button", { name: "素材预检" }));
 		const report = await settle("kr-kv", "KR");
 		const review = reviewOf(report);
 		fireEvent.click(screen.getByRole("button", { name: "查看发布排期" }));
@@ -225,8 +232,28 @@ describe("precheck to schedule", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "返回修改素材" }));
 		await settle("kr-kv", "KR");
-		expect(new URL(location.href).searchParams.get("view")).toBeNull();
+		expect(new URL(location.href).searchParams.get("view")).toBe("creative");
 		expect(screen.getByRole("heading", { name: "iPhone Air 官网主视觉" })).toBeTruthy();
+	});
+
+	it("opens WorkflowView case shortcuts and passes the 2027-01-18 Singapore handoff", async () => {
+		installFetch("offline");
+		render(<App />);
+		fireEvent.click(screen.getByRole("button", { name: /韩国.*iPhone Air/ }));
+		await settle("kr-kv", "KR");
+		expect(new URL(location.href).searchParams.get("view")).toBe("creative");
+
+		fireEvent.click(screen.getByRole("button", { name: "宣发流程" }));
+		expect(new URL(location.href).searchParams.get("view")).toBeNull();
+		expect(screen.getByRole("heading", { name: "出海宣发预检" })).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: /新加坡.*农历新年/ }));
+		expect(new URL(location.href).searchParams.get("view")).toBe("launch");
+		expect(screen.getByText("春节前消费产品发布")).toBeTruthy();
+		expect(screen.getByText("2027-01-18")).toBeTruthy();
+		expect(screen.getByText(marketStatusText("US", undefined, true))).toBeTruthy();
+		expect(screen.getByText(marketStatusText("SG", undefined, true))).toBeTruthy();
+		expect(screen.getByText(marketStatusText("KR", undefined, false))).toBeTruthy();
 	});
 
 	it("does not describe an unreviewed calendar as already checked", () => {

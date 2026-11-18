@@ -21,6 +21,7 @@ export interface LaunchHandoff {
 	themes: SignalId[];
 	/** Material title, including the variant label for a demo. */
 	source: string;
+	from?: string;
 	reviewed: ReviewedMarket[];
 	origin: ScanSource;
 	model?: string;

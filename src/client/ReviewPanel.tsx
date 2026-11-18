@@ -66,7 +66,6 @@ function RuleDetails({ finding, assets, onClose }: { finding: Finding; assets: D
 					<dd>{rule.fix}</dd>
 				</dl>
 				<h3 className="section-title">
-					<Icon name="book" />
 					关联案例 <span className="count">{finding.cases.length}</span>
 				</h3>
 				{!finding.cases.length && <p className="muted">这条规则尚未关联案例。</p>}
@@ -111,10 +110,7 @@ function AssetContent({ asset, signals, findings, active, illustrative, onFindin
 		const shown = selected.length ? selected : mine;
 		return (
 			<div className="document-preview">
-				<div className="document-label">
-					<Icon name={ASSET_ICON[asset.kind]} size={15} />
-					{asset.label}
-				</div>
+				<div className="document-label">{asset.label}</div>
 				<p>
 					<Highlight text={asset.content} needles={shown.flatMap(signalNeedles)} severity={selected.length ? active?.rule.severity : undefined} />
 				</p>
@@ -185,10 +181,7 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 		<div className="review-grid">
 			<section className="preview-section" aria-label="素材预览" ref={previewSection} tabIndex={-1}>
 				<div className="section-head">
-					<h2 className="section-title">
-						<Icon name="stack" size={17} />
-						素材预览
-					</h2>
+					<h2 className="section-title">素材预览</h2>
 					<button className="icon-button" title="放大素材预览" aria-label="放大素材预览" onClick={() => setDialog("preview")}>
 						<Icon name="expand" />
 					</button>
@@ -205,10 +198,10 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 					</div>
 				</div>
 				{evidence.length > 0 && (
-					<div className="evidence-foot">
-						<Icon name="target" size={15} />
-						<span>{evidence.map((s) => s.evidence || signalLabel(s.signal)).join(" · ")}</span>
-					</div>
+					<p className="evidence-foot">
+						<span>素材证据</span>
+						{evidence.map((s) => s.evidence || signalLabel(s.signal)).join(" · ")}
+					</p>
 				)}
 				{!!result?.unmatched.length && (
 					<details className="extra-signals">
@@ -220,7 +213,6 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 			<section className="issues-section" aria-label="风险清单">
 				<div className="section-head">
 					<h2 className="section-title">
-						<Icon name="list" size={17} />
 						风险清单 {report && <span className="count">{findings.length}</span>}
 					</h2>
 					{findings.length > 1 && <span className="section-meta">按严重度排列</span>}
@@ -281,7 +273,6 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 											<p className="scope-note">以上是知识库规则对当前素材的解释和改法，不是法律禁令，也不是投放许可。</p>
 											<div className="fix-actions">
 												<button className="text-button" onClick={() => setDialog("rule")}>
-													<Icon name="book" size={14} />
 													完整案例与来源{f.cases.length ? " (" + f.cases.length + ")" : ""}
 													<Icon name="arrow" size={14} />
 												</button>
@@ -292,7 +283,6 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 														previewSection.current?.scrollIntoView({ block: "start" });
 													}}
 												>
-													<Icon name="target" size={14} />
 													定位素材
 												</button>
 											</div>
@@ -311,8 +301,7 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 						})}
 					</div>
 				) : (
-					<div className="empty-panel">
-						<Icon name={report ? "shield" : error ? "alert" : "scan"} size={22} />
+					<div className={"empty-panel" + (report ? " clear" : "")}>
 						<p>
 							{report
 								? "当前规则未命中" + MARKET_LABEL[market] + "已收录的素材风险。这不是合规认证。"
@@ -340,10 +329,7 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 				)}
 				{!!report?.timing.length && (
 					<div className="timing-note">
-						<h3>
-							<Icon name="calendar" />
-							档期提醒
-						</h3>
+						<h3>档期提醒</h3>
 						{report.timing.map((f) => (
 							<p key={f.rule.id}>
 								<span className="mono">{f.rule.id}</span> {f.rule.looks_for}。该主题会带入发布排期。

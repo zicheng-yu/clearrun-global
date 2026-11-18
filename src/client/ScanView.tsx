@@ -36,12 +36,11 @@ interface VerdictProps {
 function Verdict({ report, before, market, error, retry, origin, children }: VerdictProps & { origin: ReactNode }) {
 	if (!report) {
 		return (
-			<div className="verdict pending" role="status">
-				<Icon name={error ? "alert" : "scan"} size={20} />
+			<div className={"verdict pending" + (error ? " failed" : "")} role="status">
 				<div>
-					<div className="minor-label">{MARKET_LABEL[market]} · 预检结论</div>
+					<p className="minor-label">{MARKET_LABEL[market]}市场 · 预检结论</p>
 					{origin}
-					<p>{error || "正在检查素材…"}</p>
+					<p className="pending-text">{error || "正在检查素材…"}</p>
 				</div>
 				{error && (
 					<button className="button" onClick={retry}>
@@ -59,17 +58,12 @@ function Verdict({ report, before, market, error, retry, origin, children }: Ver
 	return (
 		<section className={"verdict " + report.level} aria-label="预检结论" aria-live="polite">
 			<div className="decision">
-				<div className="decision-icon">
-					<Icon name={report.level === "green" ? "shield" : "alert"} size={22} />
-				</div>
-				<div>
-					<p className="minor-label">{MARKET_LABEL[market]}市场 · 预检结论</p>
-					<h2>{headline}</h2>
-					<p className="hit-line">
-						已命中 {hits} 项 · 待处理 {hits} 项
-					</p>
-					{origin}
-				</div>
+				<p className="minor-label">{MARKET_LABEL[market]}市场 · 预检结论</p>
+				<h2>{headline}</h2>
+				<p className="hit-line">
+					已命中 {hits} 项 · 待处理 {hits} 项
+				</p>
+				{origin}
 			</div>
 			<div className="risk-breakdown">
 				<p className="minor-label">严重度</p>
@@ -196,10 +190,17 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 			<div className="page-heading">
 				<div className="heading-copy">
 					<p className="context-line">
-						<Icon name={own ? "upload" : "stack"} size={14} />
-						{own ? "本次上传" : PRODUCT}
+						{own ? "本次上传" : (demo.product ?? PRODUCT)}
 						<span className="context-divider" />
-						{own ? "自有素材" : "示例素材"}
+						{own ? (
+							"自有素材"
+						) : demo.source ? (
+							<a href={demo.source.url} target="_blank" rel="noreferrer" title="查看素材来源">
+								真实案例 · {demo.source.label}
+							</a>
+						) : (
+							"示例素材"
+						)}
 					</p>
 					<h1>{title}</h1>
 					<p className="purpose-line">
@@ -212,7 +213,6 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 					</p>
 				</div>
 				<button className="button" onClick={onImport}>
-					<Icon name="plus" />
 					新建预检
 				</button>
 			</div>
@@ -268,25 +268,20 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 			{compared?.before && compared.after ? (
 				<section className={"verdict " + compared.after.level} aria-label="预检结论" aria-live="polite">
 					<div className="decision">
-						<div className="decision-icon">
-							<Icon name={compared.after.findings.length ? "alert" : "shield"} size={22} />
-						</div>
-						<div>
-							<p className="minor-label">{MARKET_LABEL[market]}市场 · 原版与本地化修订示例</p>
-							<h2>
-								{compared.before.findings.length} 项已知风险 → {compared.after.findings.length} 项已命中风险
-							</h2>
-							<p className="hit-line">
-								原版已命中 {compared.before.findings.length} 项 · 修订示例待处理 {compared.after.findings.length} 项
-							</p>
-							{origin}
-							<p className="scope-note">
-								这是预置的本地化修订示例，不会自动改写素材，也不是现场生成。
-								{compared.after.findings.length === 0
-									? " 0 项表示当前规则未命中已知风险，不是保证通过。"
-									: " 变化只统计当前知识库规则。"}
-							</p>
-						</div>
+						<p className="minor-label">{MARKET_LABEL[market]}市场 · 原版与本地化修订示例</p>
+						<h2>
+							{compared.before.findings.length} 项已知风险 → {compared.after.findings.length} 项已命中风险
+						</h2>
+						<p className="hit-line">
+							原版已命中 {compared.before.findings.length} 项 · 修订示例待处理 {compared.after.findings.length} 项
+						</p>
+						{origin}
+						<p className="scope-note">
+							这是预置的本地化修订示例，不会自动改写素材，也不是现场生成。
+							{compared.after.findings.length === 0
+								? " 0 项表示当前规则未命中已知风险，不是保证通过。"
+								: " 变化只统计当前知识库规则。"}
+						</p>
 					</div>
 					<div className="score">
 						<div className="minor-label">基于当前知识库规则的预检评分</div>
@@ -316,7 +311,6 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 						title={own ? undefined : "打开预置的本地化修订示例。这不会自动改写素材，也不是现场生成。"}
 						onClick={own ? onRevise : () => setCompare(true)}
 					>
-						<Icon name="version" size={15} />
 						{own ? "修改并复检" : "比较原版与修订示例"}
 						<Icon name="arrow" size={14} />
 					</button>

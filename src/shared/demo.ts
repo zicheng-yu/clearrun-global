@@ -32,6 +32,10 @@ export interface DemoVariant {
 export interface DemoCase {
 	id: string;
 	title: string;
+	/** Whose material this is; defaults to the fictional PRODUCT. */
+	product?: string;
+	/** Set when the material is a real, published campaign rather than an illustration. */
+	source?: { label: string; url: string };
 	pitch: string;
 	focus: Market;
 	markets: Market[];
@@ -44,6 +48,8 @@ export const DEMO_CASES: DemoCase[] = [
 	{
 		id: "kr-kv",
 		title: "iPhone Air 官网主视觉",
+		product: "Apple iPhone Air",
+		source: { label: "apple.com", url: "https://www.apple.com/kr/iphone-air/" },
 		pitch: "对照 Apple 官网的全球版与韩国版主视觉：其他地区用手指捏住机身，韩国版只展示产品。",
 		focus: "KR",
 		markets: ["US", "SG", "KR"],

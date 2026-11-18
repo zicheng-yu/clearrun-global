@@ -19,7 +19,7 @@ function numberOr(value: string | undefined, fallback: number): number {
 
 /** The perception model's settings, when live scanning is on and its key is present. */
 function llmFor(env: Env): LlmConfig | undefined {
-	if (env.SCAN_MODE !== "live") return undefined;
+	if (env.SCAN_MODE !== "live" || !env.DB) return undefined;
 	const apiKey = env.OPENROUTER_API_KEY?.trim();
 	if (!apiKey) return undefined;
 	return {
@@ -46,7 +46,7 @@ const marketsOf = (raw: unknown): Market[] => (Array.isArray(raw) ? [...new Set(
 app.get("/health", async (c) => {
 	const llm = llmFor(c.env);
 	const body: Health = { name: "ClearRun Global", scan: llm ? "live" : "offline", ...(llm ? { model: llm.model } : {}) };
-	if (llm) {
+	if (llm && c.env.DB) {
 		const spend = await llmSpend(c.env.DB);
 		body.budget = { todayUsd: Math.round(spend.today * 1e4) / 1e4, dailyCapUsd: llm.dailyUsd };
 	}
@@ -85,7 +85,7 @@ app.post("/scan", async (c) => {
 	}
 
 	const llm = llmFor(c.env);
-	if (!llm) return c.json({ error: "offline", message: "This deployment has no perception model configured; try a demo case, or add OPENROUTER_API_KEY and run in live mode." }, 503);
+	if (!llm || !c.env.DB) return c.json({ error: "offline", message: "This deployment has no perception model configured; try a demo case, or add OPENROUTER_API_KEY and run in live mode." }, 503);
 	if (await rateLimited(c)) return c.json({ error: "rate_limited", message: "Too many checks from this address. Try again in a minute." }, 429);
 	try {
 		const assets = checkAssets(body.assets);

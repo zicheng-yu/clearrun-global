@@ -16,8 +16,8 @@ export function SeverityLabel({ severity }: { severity: Severity }) {
 
 export function VerifiedLabel({ value }: { value: Verified }) {
 	return (
-		<span className="verified">
-			<Icon name={value === true ? "shield" : "info"} size={13} />
+		<span className={"verified" + (value === true ? " yes" : "")}>
+			{value === true && <Icon name="check" size={12} />}
 			{value === true ? "已核实" : value === "partial" ? "部分核实" : "待核实"}
 		</span>
 	);
@@ -28,7 +28,6 @@ export function MarketSelect({ value, onChange }: { value: Market; onChange: (ma
 		<label className="property">
 			<span>目标市场</span>
 			<span className="select-wrap market-select">
-				<Icon name="globe" size={15} />
 				<select aria-label="目标市场" value={value} onChange={(e) => onChange(e.target.value as Market)}>
 					{MARKETS.map((m) => (
 						<option key={m} value={m}>
