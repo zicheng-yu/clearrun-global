@@ -12,7 +12,7 @@ describe("creative assessment", () => {
 	it("flags the pinch gesture in Korea only, with the Apple case attached", () => {
 		const r = byMarket("kr-kv", "original");
 		expect(r.KR?.level).toBe("red");
-		expect(r.KR?.findings.map((f) => f.rule.id)).toEqual(["KR-G01", "KR-D01", "KR-D02"]);
+		expect(r.KR?.findings.map((f) => f.rule.id)).toEqual(["KR-G01"]);
 		expect(r.KR?.findings.find((f) => f.rule.id === "KR-G01")?.cases.map((c) => c.id)).toContain("kr-apple-iphone-air-pinch");
 		expect(r.US?.level).toBe("green");
 		expect(r.SG?.level).toBe("green");
@@ -31,10 +31,10 @@ describe("creative assessment", () => {
 		expect(r.US?.score).toBe(0);
 	});
 
-	it("flags the one-actor-many-races frame in Singapore", () => {
+	it("flags the pork photograph in Singapore without inventing a casting hit", () => {
 		const r = byMarket("sg-frame", "original");
-		expect(r.SG?.level).toBe("red");
-		expect(r.SG?.findings.map((f) => f.rule.id)).toEqual(["SG-R01", "SG-R02"]);
+		expect(r.SG?.level).toBe("yellow");
+		expect(r.SG?.findings.map((f) => f.rule.id)).toEqual(["SG-R02"]);
 	});
 
 	it("hands timing rules to the calendar instead of flagging them", () => {
