@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { assess, type Assessment, type Finding, type MarketAssessment } from "../engine/creative/assess.ts";
+import { SEVERITY_WEIGHT, assess, type Assessment, type Finding, type MarketAssessment } from "../engine/creative/assess.ts";
 import type { DetectedSignal } from "../shared/api.ts";
 import type { DemoAsset, DemoCase } from "../shared/demo.ts";
 import { MARKET_LABEL, STAGE_LABEL, type Market } from "../shared/knowledge.ts";
-import { signalLabel, type SignalId } from "../shared/signals.ts";
+import { SIGNALS, signalLabel, type SignalId } from "../shared/signals.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import { Dialog, Highlight, SeverityLabel, VerifiedLabel, signalNeedles } from "./ui.tsx";
 
@@ -55,6 +55,9 @@ function RuleDetails({ finding, assets, onClose }: { finding: Finding; assets: D
 					<dd>
 						{finding.signals.map((s, i) => (
 							<p key={i}>
+								<code className="mono">
+									[{SIGNALS[s.signal].channel}] {s.signal}
+								</code>{" "}
 								{assets.find((a) => a.id === s.asset)?.label} · {s.evidence || signalLabel(s.signal)}{" "}
 								<span className="confidence">置信度 {Math.round(s.confidence * 100)}%</span>
 							</p>
@@ -204,10 +207,22 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 					</p>
 				)}
 				{!!result?.unmatched.length && (
-					<details className="extra-signals">
-						<summary>已识别、未命中规则的信号（{result.unmatched.length}）</summary>
-						<p>{result.unmatched.map((s) => signalLabel(s.signal)).join("、")}</p>
-					</details>
+					<div className="extra-signals" aria-label="已识别但当前市场未命中规则的信号">
+						<strong>
+							模型已识别信号 · {MARKET_LABEL[market]}规则库 0 命中（保留原始感知，不越权拦截）
+						</strong>
+						<ul>
+							{result.unmatched.map((s, idx) => (
+								<li key={s.signal + "-" + idx}>
+									<code className="mono">
+										[{SIGNALS[s.signal].channel}] {s.signal}
+									</code>
+									<span>{signalLabel(s.signal)}</span>
+									<small>{Math.round(s.confidence * 100)}%</small>
+								</li>
+							))}
+						</ul>
+					</div>
 				)}
 			</section>
 			<section className="issues-section" aria-label="风险清单">
@@ -270,6 +285,26 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 													这条规则尚未关联案例。
 												</p>
 											)}
+											<div className="trace-strip" aria-label="信号到规则推理链">
+												<span className="story-label">神经符号推理链</span>
+												<div className="trace-steps">
+													{f.signals.map((s, idx) => (
+														<span className="trace-step" key={s.signal + "-" + idx}>
+															<code className="mono">
+																[{SIGNALS[s.signal].channel}] {s.signal}
+															</code>
+															<small>{Math.round(s.confidence * 100)}%</small>
+														</span>
+													))}
+													<span className="trace-arrow" aria-hidden="true">
+														→
+													</span>
+													<span className="trace-step rule-step">
+														<code className="mono">规则 {f.rule.id}</code>
+														<small>-{SEVERITY_WEIGHT[f.rule.severity]} 分</small>
+													</span>
+												</div>
+											</div>
 											<p className="scope-note">以上是知识库规则对当前素材的解释和改法，不是法律禁令，也不是投放许可。</p>
 											<div className="fix-actions">
 												<button className="text-button" onClick={() => setDialog("rule")}>
@@ -294,6 +329,11 @@ export function ReviewPanel({ assets, signals, result, report, before, market, e
 											<span className="mono">{f.rule.id}</span>
 											<VerifiedLabel value={f.rule.verified} />
 											<span>{f.rule.category}</span>
+											{f.signals.map((s, idx) => (
+												<span className="mono" key={s.signal + "-" + idx}>
+													[{SIGNALS[s.signal].channel}] {s.signal}
+												</span>
+											))}
 										</p>
 									</details>
 								</article>
@@ -403,7 +443,10 @@ export function CompareBoard({
 	const after = assess(localizedSignals, [market]).markets[0];
 	if (!before || !after) return null;
 	const resolved = before.findings.filter((old) => !after.findings.some((finding) => finding.rule.id === old.rule.id));
-	const ids = [...new Set([...demo.original.assets, ...demo.localized.assets].map((asset) => asset.id))];
+	const hitAssets = new Set([...originalSignals, ...localizedSignals].map((signal) => signal.asset));
+	const ids = [...new Set([...demo.original.assets, ...demo.localized.assets].map((asset) => asset.id))].sort(
+		(a, b) => Number(hitAssets.has(b)) - Number(hitAssets.has(a)),
+	);
 	const paired = (assets: DemoAsset[]) => ids.map((id) => assets.find((asset) => asset.id === id)).filter((asset): asset is DemoAsset => !!asset);
 	return (
 		<section className="compare-board-wrap" aria-label="原版与修订示例对照">

@@ -1,9 +1,10 @@
-import { knowledge } from "../shared/knowledge.ts";
+import { knowledge, type Market } from "../shared/knowledge.ts";
+import { SIGNAL_IDS } from "../shared/signals.ts";
 import { Icon } from "./Icon.tsx";
 
 interface Props {
 	onInput: () => void;
-	onCase: (id: string, market: "KR" | "US") => void;
+	onCase: (id: string, market: Market) => void;
 	onPlan: () => void;
 	onSingapore: () => void;
 }
@@ -16,10 +17,48 @@ const STEPS = [
 ] as const;
 
 export function WorkflowView({ onInput, onCase, onPlan, onSingapore }: Props) {
-	const cases = [
-		{ code: "KR", name: "韩国", text: "iPhone Air 官网主视觉：全球版捏住机身的手指，韩国版删掉了", open: () => onCase("kr-kv", "KR") },
-		{ code: "US", name: "美国", text: "核查“100% 准确”的依据，对照发布文案改稿", open: () => onCase("us-copy", "US") },
-		{ code: "SG", name: "新加坡", text: "比较美国首发周与新加坡农历新年前后的窗口", open: onSingapore },
+	const archNodes = [
+		["多模态素材", "海报 · 关键帧 · 文案 · 隐私页"],
+		["受控感知", `${SIGNAL_IDS.length} 类词表信号 · 不做风险臆断`],
+		["确定性规则库", `${knowledge.rules.length} 条规则 · ${knowledge.cases.length} 个真实出处`],
+		["档期压力引擎", `${knowledge.calendar.length} 个三国节点 · 本地 0ms 重算`],
+	] as const;
+	const cases: Array<{ id: string; code: Market; name: string; tag: string; thumb?: string; text: string; open: () => void }> = [
+		{
+			id: "kr",
+			code: "KR",
+			name: "韩国",
+			tag: "手势跨市场",
+			thumb: "/demo/iphone-air-global.jpg",
+			text: "iPhone Air 官网主视觉：全球版捏住机身的手指，韩国版删掉了",
+			open: () => onCase("kr-kv", "KR"),
+		},
+		{
+			id: "us",
+			code: "US",
+			name: "美国",
+			tag: "FTC 合规",
+			thumb: "/demo/us-desk.jpg",
+			text: "核查“100% 准确”的依据，对照发布文案改稿",
+			open: () => onCase("us-copy", "US"),
+		},
+		{
+			id: "sg-food",
+			code: "SG",
+			name: "新加坡",
+			tag: "宣发联动",
+			thumb: "/demo/sg-bak-kut-teh.jpg",
+			text: "肉骨茶饮食素材触发宗教提示，并自动阻断新加坡斋月发布周",
+			open: () => onCase("sg-frame", "SG"),
+		},
+		{
+			id: "sg-cny",
+			code: "SG",
+			name: "新加坡",
+			tag: "错峰排期",
+			text: "比较美国首发周与新加坡农历新年前后的窗口",
+			open: onSingapore,
+		},
 	];
 	return (
 		<div className="workspace-page overview">
@@ -30,6 +69,14 @@ export function WorkflowView({ onInput, onCase, onPlan, onSingapore }: Props) {
 					给出海的 AI 产品做上线前检查：先确认宣传素材在目标市场能不能用，再为每个市场找一个不撞档、不踩敏感日的发布周。
 				</p>
 			</header>
+			<ol className="arch-strip" aria-label="核心工作原理">
+				{archNodes.map(([title, desc]) => (
+					<li key={title}>
+						<strong>{title}</strong>
+						<span>{desc}</span>
+					</li>
+				))}
+			</ol>
 			<div className="entry-grid">
 				<button className="entry" onClick={onInput}>
 					<span className="entry-mark" aria-hidden="true">
@@ -67,12 +114,16 @@ export function WorkflowView({ onInput, onCase, onPlan, onSingapore }: Props) {
 				<h2 id="overview-cases">示例案例</h2>
 				<div className="case-list">
 					{cases.map((c) => (
-						<button key={c.code} onClick={c.open}>
+						<button key={c.id} className={c.thumb ? "has-thumb" : undefined} onClick={c.open}>
 							<span className="case-market">
 								{c.name}
 								<small>{c.code}</small>
 							</span>
-							<span className="case-text">{c.text}</span>
+							{c.thumb && <img className="case-thumb" src={c.thumb} alt="" loading="lazy" />}
+							<span className="case-copy">
+								<span className="case-tag">{c.tag}</span>
+								<span className="case-text">{c.text}</span>
+							</span>
 							<Icon name="arrow" size={15} />
 						</button>
 					))}

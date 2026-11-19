@@ -1,7 +1,9 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { App } from "../../src/client/App.tsx";
 import { LaunchView } from "../../src/client/LaunchView.tsx";
+import { MaterialImport } from "../../src/client/MaterialImport.tsx";
 import { ReviewPanel } from "../../src/client/ReviewPanel.tsx";
 import { ScanView } from "../../src/client/ScanView.tsx";
 import { buildLaunchHandoff } from "../../src/client/handoff.ts";
@@ -11,6 +13,7 @@ import { demoCase } from "../../src/shared/demo.ts";
 afterEach(() => {
 	cleanup();
 	vi.unstubAllGlobals();
+	history.replaceState(null, "", "/");
 });
 
 function installFetch() {
@@ -145,5 +148,99 @@ describe("theme what-if and planned week", () => {
 		fireEvent.click(within(calendar).getByRole("button", { name: /新加坡 发布周起始 2027-02-08/ }));
 		expect(screen.getByText("建议调整原定周")).toBeTruthy();
 		expect(within(screen.getByLabelText("当前格图例")).getByText("主题阻断周").getAttribute("aria-current")).toBe("true");
+	});
+});
+
+describe("expo booth principle visibility and shortcuts", () => {
+	it("shows the 4-node architecture strip on WorkflowView and links directly to sg-frame", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+				const url = String(input);
+				if (url.includes("/api/health")) {
+					return new Response(JSON.stringify({ name: "ClearRun Global", scan: "offline" }), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
+				}
+				const body = JSON.parse(String(init?.body ?? "{}")) as { demo?: { caseId?: string; variant?: string } };
+				const demo = demoCase(body.demo?.caseId ?? "");
+				const variant = body.demo?.variant === "localized" ? demo?.localized : demo?.original;
+				return new Response(JSON.stringify({ signals: variant?.signals ?? [], source: "offline" }), {
+					status: 200,
+					headers: { "Content-Type": "application/json" },
+				});
+			}),
+		);
+		render(<App />);
+		const arch = screen.getByRole("list", { name: "核心工作原理" });
+		expect(arch.textContent).toContain("受控感知");
+		expect(arch.textContent).toContain("确定性规则库");
+		expect(arch.textContent).toContain("档期压力引擎");
+
+		fireEvent.click(screen.getByRole("button", { name: /新加坡.*肉骨茶/ }));
+		expect(new URL(location.href).searchParams.get("view")).toBe("creative");
+		expect(await screen.findByRole("heading", { name: "多语言宣传片关键帧" })).toBeTruthy();
+		expect((await screen.findAllByText(/桌上的肉骨茶/)).length).toBeGreaterThan(0);
+	});
+
+	it("surfaces the signal-to-rule trace and visible unmatched signals across markets", () => {
+		const demo = demoCase("kr-kv");
+		if (!demo) throw new Error("kr");
+		const krResult = assess(demo.original.signals, ["KR"]);
+		const { rerender } = render(
+			<ReviewPanel assets={demo.original.assets} signals={demo.original.signals} result={krResult} report={krResult.markets[0]} market="KR" />,
+		);
+		const trace = screen.getByLabelText("信号到规则推理链");
+		expect(trace.textContent).toContain("[vision] gesture.pinch");
+		expect(trace.textContent).toContain("规则 KR-G01");
+
+		const usResult = assess(demo.original.signals, ["US"]);
+		rerender(
+			<ReviewPanel assets={demo.original.assets} signals={demo.original.signals} result={usResult} report={usResult.markets[0]} market="US" />,
+		);
+		const unmatched = screen.getByLabelText("已识别但当前市场未命中规则的信号");
+		expect(unmatched.textContent).toContain("gesture.pinch");
+		expect(unmatched.textContent).toContain("美国规则库 0 命中");
+	});
+
+	it("exposes audience pills, planned week rank, and math breakdown without banned wording", () => {
+		render(<LaunchView />);
+		const audienceBar = screen.getByRole("group", { name: "目标受众快捷切换" });
+		const devBtn = within(audienceBar).getByRole("button", { name: "开发者" });
+		fireEvent.click(devBtn);
+		expect(devBtn.getAttribute("aria-pressed")).toBe("true");
+
+		fireEvent.change(screen.getByLabelText("原定上线日期"), { target: { value: "2026-11-23" } });
+		expect(screen.getByText(/排第 \d+ 位/)).toBeTruthy();
+
+		const breakdown = screen.getByText(/算法拆解/).closest("details");
+		expect(breakdown?.textContent).toContain("LAUNCH_RUN");
+		expect(screen.queryByText(/注意力占用/)).toBeNull();
+	});
+
+	it("fills live preset copy and submits a live scan from MaterialImport", async () => {
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () =>
+				new Response(
+					JSON.stringify({
+						signals: [{ signal: "claim.absolute_accuracy", asset: "copy", evidence: "100% accurate", confidence: 0.95 }],
+						source: "model",
+						model: "anthropic/claude-sonnet-5.5",
+					}),
+					{ status: 200, headers: { "Content-Type": "application/json" } },
+				),
+			),
+		);
+		const onResult = vi.fn();
+		render(<MaterialImport market="KR" mode="live" demoId="kr-kv" onDemo={() => undefined} onClose={() => undefined} onResult={onResult} />);
+		fireEvent.click(screen.getByRole("button", { name: /美区夸大宣称/ }));
+		expect((screen.getByLabelText("目标市场") as HTMLSelectElement).value).toBe("US");
+		expect((screen.getByPlaceholderText("粘贴广告语或发布稿") as HTMLTextAreaElement).value).toContain("100% accurate");
+
+		fireEvent.click(screen.getByRole("button", { name: "开始预检" }));
+		await vi.waitFor(() => expect(onResult).toHaveBeenCalled());
+		expect(onResult.mock.calls[0]?.[1]).toBe("US");
 	});
 });

@@ -1,10 +1,34 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent } from "react";
 import type { DetectedSignal, Health, ScanAsset, ScanSource } from "../shared/api.ts";
 import { DEMO_CASES } from "../shared/demo.ts";
 import type { Market } from "../shared/knowledge.ts";
 import { imageToDataUrl, scan } from "./api.ts";
 import { knownScanSource } from "./origin.ts";
 import { Dialog, MarketSelect } from "./ui.tsx";
+
+const LIVE_PRESETS: Array<{ id: string; label: string; market: Market; copy: string; page: string }> = [
+	{
+		id: "us-claim",
+		label: "🇺🇸 美区夸大宣称",
+		market: "US",
+		copy: "Fire your assistant. Hire Mira.\n100% accurate. Never hallucinates.",
+		page: "首屏三条用户好评由 AI 自动生成，用于示意效果。",
+	},
+	{
+		id: "kr-privacy",
+		label: "🇰🇷 韩区隐私缺失",
+		market: "KR",
+		copy: "Mira Agent. Your work, handled.",
+		page: "隐私政策目前仅提供英文版，未说明用户数据存储地区与跨境传输，也未标注 AI 生成内容。",
+	},
+	{
+		id: "sg-ramadan",
+		label: "🇸🇬 新区斋月饮食",
+		market: "SG",
+		copy: "Ramadan lunch promo: try our Bak Kut Teh pork rib soup combo with Mira!",
+		page: "",
+	},
+];
 
 export interface UploadedMaterial {
 	title: string;
@@ -35,11 +59,49 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 	const [copy, setCopy] = useState(() => initial?.assets.find((a) => a.kind === "copy")?.content ?? "");
 	const [page, setPage] = useState(() => initial?.assets.find((a) => a.kind === "page")?.content ?? "");
 	const [busy, setBusy] = useState(false);
+	const [dragging, setDragging] = useState(false);
+	const [previewUrl, setPreviewUrl] = useState("");
 	const [error, setError] = useState("");
 	const request = useRef<AbortController | undefined>(undefined);
 	const fileInput = useRef<HTMLInputElement>(null);
 	useEffect(() => () => request.current?.abort(), []);
+	useEffect(() => {
+		if (!file || typeof URL.createObjectURL !== "function") {
+			setPreviewUrl("");
+			return;
+		}
+		const url = URL.createObjectURL(file);
+		setPreviewUrl(url);
+		return () => URL.revokeObjectURL(url);
+	}, [file]);
 	const demoOnly = mode === "offline" && !initial;
+	const acceptImage = (next?: File) => {
+		if (next && /^image\/(png|jpeg|webp)$/i.test(next.type)) {
+			setFile(next);
+			setError("");
+		}
+	};
+	const handlePaste = (e: ClipboardEvent<HTMLFormElement>) => {
+		if (demoOnly || mode !== "live" || busy) return;
+		const items = e.clipboardData?.items;
+		if (!items) return;
+		for (const item of items) {
+			if (item.type.startsWith("image/")) {
+				const pasted = item.getAsFile();
+				if (pasted) {
+					acceptImage(pasted);
+					e.preventDefault();
+					return;
+				}
+			}
+		}
+	};
+	const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		setDragging(false);
+		if (demoOnly || mode !== "live" || busy) return;
+		acceptImage(e.dataTransfer.files?.[0]);
+	};
 
 	const run = async () => {
 		if (request.current || mode !== "live") return;
@@ -83,6 +145,7 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 		<Dialog title={initial ? "重新预检素材" : "新建素材预检"} onClose={onClose}>
 			<form
 				className="dialog-body import-form"
+				onPaste={handlePaste}
 				onSubmit={(e) => {
 					e.preventDefault();
 					if (demoOnly) onDemo(example, target);
@@ -121,15 +184,47 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 					)}
 					{!demoOnly && (
 						<fieldset disabled={mode !== "live"} className="import-fields">
-							<label className="form-field">
-								<span>图片或视频关键帧</span>
-								<input
-									ref={fileInput}
-									type="file"
-									accept="image/png,image/jpeg,image/webp"
-									onChange={(e) => setFile(e.target.files?.[0])}
-								/>
-							</label>
+							<div className="live-presets" aria-label="现场实测快捷样例">
+								<span className="minor-label">现场实测一键填入</span>
+								<div className="choices">
+									{LIVE_PRESETS.map((preset) => (
+										<button
+											key={preset.id}
+											type="button"
+											onClick={() => {
+												setTarget(preset.market);
+												setCopy(preset.copy);
+												setPage(preset.page);
+												setError("");
+											}}
+										>
+											{preset.label}
+										</button>
+									))}
+								</div>
+							</div>
+							<div
+								className={"drop-zone" + (dragging ? " dragging" : "")}
+								onDragOver={(e) => {
+									e.preventDefault();
+									setDragging(true);
+								}}
+								onDragLeave={() => setDragging(false)}
+								onDrop={handleDrop}
+							>
+								<label className="form-field">
+									<span>图片或视频关键帧（支持拖拽或 Ctrl/Cmd+V 粘贴）</span>
+									<input
+										ref={fileInput}
+										type="file"
+										accept="image/png,image/jpeg,image/webp"
+										onChange={(e) => setFile(e.target.files?.[0])}
+									/>
+								</label>
+								{(previewUrl || savedImage?.content) && (
+									<img className="upload-preview" src={previewUrl || savedImage?.content} alt={file?.name ?? savedImage?.label ?? "上传图片预览"} />
+								)}
+							</div>
 							{(savedImage || file) && (
 								<div className="attachment-note">
 									{file?.name ?? savedImage?.label}
@@ -169,6 +264,11 @@ export function MaterialImport({ market, mode, serviceError, initial, demoId, on
 						</fieldset>
 					)}
 				</fieldset>
+				{busy && (
+					<p className="busy-steps" role="status">
+						1/2 多模态模型提取 22 类受控信号 → 2/2 知识库确定性规则裁决…
+					</p>
+				)}
 				{error && (
 					<p role="alert" className="error-text">
 						检测失败，没有实时分析结果。{error}

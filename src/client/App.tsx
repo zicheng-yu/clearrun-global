@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Health } from "../shared/api.ts";
 import { DEMO_CASES, PRODUCT, demoCase } from "../shared/demo.ts";
 import { knowledge, type Market } from "../shared/knowledge.ts";
+import { SIGNAL_IDS } from "../shared/signals.ts";
 import { useJson } from "./api.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import { LaunchView } from "./LaunchView.tsx";
@@ -127,6 +128,10 @@ function WorkspaceInfo({ health, error, onClose }: { health?: Health; error?: st
 					主结果是已命中项和待处理项。预检评分基于当前知识库规则；100 表示当前规则未命中已知风险，不是合规认证，也不保证通过。档期里的压力指数是模型计算结果，不是真实市场注意力百分比。预置修订稿是本地化修订示例，不会自动改写素材。
 					标记为待核实的案例还没有完成出处核对。
 				</p>
+				<h3>架构与边界护栏</h3>
+				<p>
+					多模态感知受限于 {SIGNAL_IDS.length} 类受控信号词表并启用 Fail-Closed 解析校验（拒收词表外信号）；规则判定（{knowledge.rules.length} 条）与排期引擎（{knowledge.calendar.length} 个事件）在浏览器与 Cloudflare Worker 同构运行、本地 0ms 重算；实时模式通过 D1 花费台账实施日限 $1 / 总限 $10 预算封顶与单 IP 10次/分钟限流。
+				</p>
 			</div>
 		</Dialog>
 	);
@@ -227,10 +232,15 @@ export function App() {
 						<span className="crumb-slash">/</span>
 						<span>{VIEW_LABEL[view]}</span>
 					</div>
-					<span className={"service-status" + (mode === "live" ? " connected" : health.error ? " failed" : "")} title={serviceTitle}>
+					<button
+						type="button"
+						className={"service-status" + (mode === "live" ? " connected" : health.error ? " failed" : "")}
+						title={serviceTitle}
+						onClick={() => setModal("info")}
+					>
 						<i />
 						{serviceLabel}
-					</span>
+					</button>
 				</header>
 				<main id="work-area" tabIndex={-1}>
 					{view === "overview" && (

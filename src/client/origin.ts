@@ -39,7 +39,7 @@ export function originCopy(input: {
 	}
 	switch (input.source) {
 		case "fixture":
-			return { kind: "fixture", label: "预置示例", detail: "预置示例结果，使用预置检测信号，不是这次模型实时识别。" };
+			return { kind: "fixture", label: "预置示例", detail: "预置示例结果，使用预置感知信号（非本次模型实时识别）；规则裁决与档期引擎均为本地实时运行。" };
 		case "model":
 			return input.fallbackModel
 				? {
@@ -53,7 +53,7 @@ export function originCopy(input: {
 						detail: "实时模型分析。由感知模型提取信号" + (input.model ? "（" + input.model + "）" : "") + "，规则库给出判断。",
 					};
 		case "offline":
-			return { kind: "offline", label: "离线演示", detail: "离线模拟，使用预置信号，不是实时分析。" };
+			return { kind: "offline", label: "离线演示", detail: "离线模拟，使用预置信号，不是实时分析；规则裁决与档期引擎均为本地实时实算。" };
 		case "fallback":
 			return { kind: "fallback", label: "检测回退", detail: "实时分析没有完成。这是失败回退，不能当成实时分析或已通过预检。" };
 		default:

@@ -220,18 +220,24 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 				{(["KR", "US", "SG"] as const).map((code) => {
 					const card = marketReports?.find((item) => item.market === code);
 					const count = card ? `已命中 ${card.findings.length} 项` : "读取中";
+					const dot = card ? (card.level === "red" ? "high" : card.level === "yellow" ? "medium" : "green") : "";
 					return (
 						<button
 							key={code}
 							type="button"
 							className="market-card"
+							data-level={card?.level ?? "pending"}
 							aria-pressed={market === code}
 							aria-label={`${MARKET_LABEL[code]}市场，${count}`}
 							onClick={() => onMarketChange(code)}
 						>
-							<strong>
-								{MARKET_LABEL[code]} · {code}
-							</strong>
+							<div className="market-card-head">
+								<strong>
+									{card && <i className={"dot " + dot} aria-hidden="true" />}
+									{MARKET_LABEL[code]} · {code}
+								</strong>
+								{card && <span className="market-score">{card.score} 分</span>}
+							</div>
 							<span>{count}</span>
 							{card && <span>待处理 {card.findings.length} 项</span>}
 						</button>
@@ -276,12 +282,6 @@ export function ScanView({ demo, own, market, onMarketChange, onImport, onRevise
 							原版已命中 {compared.before.findings.length} 项 · 修订示例待处理 {compared.after.findings.length} 项
 						</p>
 						{origin}
-						<p className="scope-note">
-							这是预置的本地化修订示例，不会自动改写素材，也不是现场生成。
-							{compared.after.findings.length === 0
-								? " 0 项表示当前规则未命中已知风险，不是保证通过。"
-								: " 变化只统计当前知识库规则。"}
-						</p>
 					</div>
 					<div className="score">
 						<div className="minor-label">基于当前知识库规则的预检评分</div>
